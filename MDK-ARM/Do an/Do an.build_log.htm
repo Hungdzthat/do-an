@@ -1,0 +1,134 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: µVision V5.29.0.0
+Copyright (C) 2019 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: Hung Admin, Matma, LIC=----
+ 
+Tool Versions:
+Toolchain:       MDK-Lite  Version: 5.29.0.0
+Toolchain Path:  C:\Keil_v5\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.06 update 6 (build 750)
+Assembler:       Armasm.exe V5.06 update 6 (build 750)
+Linker/Locator:  ArmLink.exe V5.06 update 6 (build 750)
+Library Manager: ArmAr.exe V5.06 update 6 (build 750)
+Hex Converter:   FromElf.exe V5.06 update 6 (build 750)
+CPU DLL:         SARMCM3.DLL V5.29.0.0
+Dialog DLL:      DCM.DLL V1.17.3.0
+Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.0.7.0
+Dialog DLL:      TCM.DLL V1.36.5.0
+ 
+<h2>Project:</h2>
+D:\STM32F1\HAL\Do an\MDK-ARM\Do an.uvprojx
+Project File Date:  06/05/2026
+
+<h2>Output:</h2>
+*** Using Compiler 'V5.06 update 6 (build 750)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
+Rebuild target 'Do an'
+assembling startup_stm32f103xb.s...
+compiling task_display.c...
+../Core/Inc/osc_rtos.h(26): warning:  #1-D: last line of file ends without a newline
+  #endif
+..\Core\Src\task_display.c: 1 warning, 0 errors
+compiling task_dsp.c...
+../Core/Inc/osc_rtos.h(26): warning:  #1-D: last line of file ends without a newline
+  #endif
+..\Core\Src\task_dsp.c(43): warning:  #1-D: last line of file ends without a newline
+  }
+..\Core\Src\task_dsp.c: 2 warnings, 0 errors
+compiling stm32f1xx_it.c...
+compiling stm32f1xx_hal_msp.c...
+compiling stm32f1xx_hal_gpio_ex.c...
+compiling stm32f1xx_hal_timebase_tim.c...
+compiling freertos.c...
+../Core/Inc/osc_rtos.h(26): warning:  #1-D: last line of file ends without a newline
+  #endif
+../Core/Inc/task_btn.h(28): warning:  #1-D: last line of file ends without a newline
+  #endif
+../Core/Src/freertos.c: 2 warnings, 0 errors
+compiling task_adc.c...
+../Core/Inc/osc_rtos.h(26): warning:  #1-D: last line of file ends without a newline
+  #endif
+../Core/Inc/Analog_signal.h(10): warning:  #1295-D: Deprecated declaration Analog_Signal_Init - give arg types
+  void Analog_Signal_Init();
+..\Core\Src\task_adc.c: 2 warnings, 0 errors
+compiling main.c...
+../Core/Inc/osc_rtos.h(26): warning:  #1-D: last line of file ends without a newline
+  #endif
+../Core/Inc/task_btn.h(28): warning:  #1-D: last line of file ends without a newline
+  #endif
+../Core/Src/main.c: 2 warnings, 0 errors
+compiling task_btn.c...
+../Core/Inc/task_btn.h(28): warning:  #1-D: last line of file ends without a newline
+  #endif
+../Core/Inc/osc_rtos.h(26): warning:  #1-D: last line of file ends without a newline
+  #endif
+..\Core\Src\task_btn.c(95): warning:  #1-D: last line of file ends without a newline
+  }
+..\Core\Src\task_btn.c: 3 warnings, 0 errors
+compiling stm32f1xx_hal_adc.c...
+compiling stm32f1xx_hal_tim_ex.c...
+compiling stm32f1xx_hal_tim.c...
+compiling stm32f1xx_hal.c...
+compiling stm32f1xx_hal_rcc_ex.c...
+compiling stm32f1xx_hal_adc_ex.c...
+compiling stm32f1xx_hal_pwr.c...
+compiling croutine.c...
+compiling stm32f1xx_hal_rcc.c...
+compiling stm32f1xx_hal_cortex.c...
+compiling stm32f1xx_hal_dma.c...
+compiling stm32f1xx_hal_gpio.c...
+compiling event_groups.c...
+compiling list.c...
+compiling stm32f1xx_hal_flash.c...
+compiling stm32f1xx_hal_flash_ex.c...
+compiling timers.c...
+compiling stream_buffer.c...
+compiling heap_4.c...
+compiling queue.c...
+compiling port.c...
+compiling tasks.c...
+compiling stm32f1xx_hal_exti.c...
+compiling cmsis_os.c...
+compiling system_stm32f1xx.c...
+compiling stm32f1xx_hal_uart.c...
+linking...
+Do an\Do an.axf: Error: L6218E: Undefined symbol ADC_VAL_FINAL (referred from task_adc.o).
+Do an\Do an.axf: Error: L6218E: Undefined symbol Analog_Signal_Init (referred from task_adc.o).
+Do an\Do an.axf: Error: L6218E: Undefined symbol dsp_calcFreq (referred from task_dsp.o).
+Do an\Do an.axf: Error: L6218E: Undefined symbol dsp_calcVpp (referred from task_dsp.o).
+Do an\Do an.axf: Error: L6218E: Undefined symbol dsp_calcVrms (referred from task_dsp.o).
+Do an\Do an.axf: Error: L6218E: Undefined symbol dsp_findTrig (referred from task_dsp.o).
+Not enough information to list image symbols.
+Not enough information to list load addresses in the image map.
+Finished: 2 information, 0 warning and 6 error messages.
+"Do an\Do an.axf" - 6 Error(s), 12 Warning(s).
+
+<h2>Software Packages used:</h2>
+
+Package Vendor: ARM
+                http://www.keil.com/pack/ARM.CMSIS.5.6.0.pack
+                ARM.CMSIS.5.6.0
+                CMSIS (Cortex Microcontroller Software Interface Standard)
+   * Component: CORE Version: 5.3.0
+
+Package Vendor: Keil
+                https://www.keil.com/pack/Keil.STM32F1xx_DFP.2.4.1.pack
+                Keil.STM32F1xx_DFP.2.4.1
+                STMicroelectronics STM32F1 Series Device Support, Drivers and Examples
+
+<h2>Collection of Component include folders:</h2>
+  .\RTE\_Do_an
+  C:\Users\Admin\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include
+  C:\Users\Admin\AppData\Local\Arm\Packs\Keil\STM32F1xx_DFP\2.4.1\Device\Include
+
+<h2>Collection of Component Files used:</h2>
+
+   * Component: ARM::CMSIS:CORE:5.3.0
+Target not created.
+Build Time Elapsed:  00:00:05
+</pre>
+</body>
+</html>

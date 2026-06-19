@@ -1,0 +1,14 @@
+*.o
+*.obj
+*.hex
+*.axf
+*.map
+*.dep
+*.uvgui.*
+*.uvoptx
+*.uvguix
+*.bak
+*.lst
+Objects/
+Listings/
+DebugConfig/

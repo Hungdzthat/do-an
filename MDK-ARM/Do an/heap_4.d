@@ -1,0 +1,13 @@
+do an\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c
+do an\heap_4.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+do an\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+do an\heap_4.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+do an\heap_4.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+do an\heap_4.o: ../Core/Inc/FreeRTOSConfig.h
+do an\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+do an\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+do an\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+do an\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3/portmacro.h
+do an\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+do an\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
+do an\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h
