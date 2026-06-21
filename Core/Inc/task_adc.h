@@ -7,10 +7,6 @@
 #include "semphr.h"
 #include "osc_types.h"
 
-extern uint16_t dmaBuf[SAMPLE_SIZE * 2];
-
 void StartTaskADC(void const *argument);
-void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc);
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc);
 
-#endif
+#endif /* TASK_ADC_H */

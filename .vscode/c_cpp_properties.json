@@ -1,0 +1,35 @@
+{
+    "configurations": [
+        {
+            "name": "STM32",
+            "includePath": [
+                "${workspaceFolder}/Core/Inc",
+                "${workspaceFolder}/Drivers/STM32F1xx_HAL_Driver/Inc",
+                "${workspaceFolder}/Drivers/STM32F1xx_HAL_Driver/Inc/Legacy",
+                "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32F1xx/Include",
+                "${workspaceFolder}/Drivers/CMSIS/Include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/Source/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3",
+                "${workspaceFolder}/RTOS_PRJ/Core/Inc",
+                "${workspaceFolder}/RTOS_PRJ/Drivers/STM32F1xx_HAL_Driver/Inc",
+                "${workspaceFolder}/RTOS_PRJ/Drivers/STM32F1xx_HAL_Driver/Inc/Legacy",
+                "${workspaceFolder}/RTOS_PRJ/Drivers/CMSIS/Device/ST/STM32F1xx/Include",
+                "${workspaceFolder}/RTOS_PRJ/Drivers/CMSIS/Include",
+                "${workspaceFolder}/RTOS_PRJ/Middlewares/Third_Party/FreeRTOS/Source/include",
+                "${workspaceFolder}/RTOS_PRJ/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS",
+                "${workspaceFolder}/RTOS_PRJ/Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3",
+                "C:/Keil_v5/ARM/ARMCC/include"
+            ],
+            "defines": [
+                "USE_HAL_DRIVER",
+                "STM32F103xB"
+            ],
+            "compilerPath": "C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/12.2 rel1/bin/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "windows-gcc-arm"
+        }
+    ],
+    "version": 4
+}

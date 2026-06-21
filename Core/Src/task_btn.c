@@ -1,57 +1,39 @@
 #include "task_btn.h"
 #include "osc_rtos.h"
-#include "Button_signal.h"   /* file partner */
+/* Cau hinh mac dinh khi khoi dong */
+OscConfig_t gConfig = {.vdivScale = 1.0f,
+                       .timeDivMs = 5,
+                       .showInfo = 1,
+                       .selMode = SEL_VDIV,
+                       .holdRun = OSC_RUN};
 
-/* Giá tr? m?c d?nh khi kh?i d?ng */
-OscConfig_t gConfig = {
-    .vdivScale = 1.0f,
-    .timeDivMs = 5,
-    .showInfo  = 1,
-    .selMode   = SEL_VDIV,
-    .holdRun   = OSC_RUN
-};
+void StartTaskBtn(void const *argument) {
+  for (;;) {
+    /* Doc toan bo trang thai nut TRUOC khi chiem mutex
+     * -> giam thoi gian giu mutex, tranh block task khac */
+    uint8_t isSel = Btn_IsSelPressed();
+    uint8_t isPlus = Btn_IsPlusPressed();
+    uint8_t isMinus = Btn_IsMinusPressed();
+    uint8_t isInfo = Btn_IsInfoPressed();
+    uint8_t isHold = Btn_IsHoldPressed();
 
-void StartTaskBtn(void const *argument)
-{
-    for(;;)
-    {
-        /* RTOS ch? lo: d?c tín hi?u nút (partner x? lý) ? ghi gConfig có Mutex */
+    if (isSel || isPlus || isMinus || isInfo || isHold) {
+      osMutexWait(gConfigMutexHandle, osWaitForever);
 
-        if(Btn_IsSelPressed())
-        {
-            osMutexWait(gConfigMutexHandle, osWaitForever);
-            gConfig.selMode = Btn_GetNextSelMode(gConfig.selMode);
-            osMutexRelease(gConfigMutexHandle);
-        }
+      if (isSel)
+        gConfig.selMode = Btn_GetNextSelMode(gConfig.selMode);
+      if (isPlus)
+        Btn_ApplyPlus(&gConfig);
+      if (isMinus)
+        Btn_ApplyMinus(&gConfig);
+      if (isInfo)
+        gConfig.showInfo = !gConfig.showInfo;
+      if (isHold)
+        gConfig.holdRun = !gConfig.holdRun;
 
-        if(Btn_IsPlusPressed())
-        {
-            osMutexWait(gConfigMutexHandle, osWaitForever);
-            Btn_ApplyPlus(&gConfig);
-            osMutexRelease(gConfigMutexHandle);
-        }
-
-        if(Btn_IsMinusPressed())
-        {
-            osMutexWait(gConfigMutexHandle, osWaitForever);
-            Btn_ApplyMinus(&gConfig);
-            osMutexRelease(gConfigMutexHandle);
-        }
-
-        if(Btn_IsInfoPressed())
-        {
-            osMutexWait(gConfigMutexHandle, osWaitForever);
-            gConfig.showInfo = !gConfig.showInfo;
-            osMutexRelease(gConfigMutexHandle);
-        }
-
-        if(Btn_IsHoldPressed())
-        {
-            osMutexWait(gConfigMutexHandle, osWaitForever);
-            gConfig.holdRun = !gConfig.holdRun;
-            osMutexRelease(gConfigMutexHandle);
-        }
-
-        osDelay(50);
+      osMutexRelease(gConfigMutexHandle);
     }
+
+    osDelay(50); /* Debounce + nhuong CPU */
+  }
 }

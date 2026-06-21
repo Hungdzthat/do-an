@@ -1,4 +1,4 @@
-#ifndef TASK_BTN_H
+﻿#ifndef TASK_BTN_H
 #define TASK_BTN_H
 
 #include "main.h"
@@ -17,12 +17,23 @@
 #define BTN_INFO_PIN    GPIO_PIN_4
 #define BTN_INFO_PORT   GPIOA
 
-/* Bien cau h�nh � dinh nghia trong task_btn.c */
+/* Bien cau hinh - dinh nghia trong task_btn.c */
 extern OscConfig_t gConfig;
 
 // Mutex
 extern osMutexId   gConfigMutexHandle;
 
 void StartTaskBtn(void const *argument);
+
+/* Prototypes thay cho Button_signal.h (để IDE hết báo đỏ) */
+extern uint8_t Btn_IsSelPressed(void);
+extern uint8_t Btn_IsPlusPressed(void);
+extern uint8_t Btn_IsMinusPressed(void);
+extern uint8_t Btn_IsInfoPressed(void);
+extern uint8_t Btn_IsHoldPressed(void);
+
+extern SelMode_t Btn_GetNextSelMode(SelMode_t current_mode);
+extern void Btn_ApplyPlus(OscConfig_t *cfg);
+extern void Btn_ApplyMinus(OscConfig_t *cfg);
 
 #endif
