@@ -5,6 +5,7 @@
 "spi\stm32f1xx_it.o"
 "spi\stm32f1xx_hal_msp.o"
 "spi\st7735_dma.o"
+"spi\fonts.o"
 "spi\stm32f1xx_hal_gpio_ex.o"
 "spi\stm32f1xx_hal_adc.o"
 "spi\stm32f1xx_hal_adc_ex.o"

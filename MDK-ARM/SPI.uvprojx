@@ -443,6 +443,16 @@
               <FileType>5</FileType>
               <FilePath>..\Core\Inc\st7735_dma.h</FilePath>
             </File>
+            <File>
+              <FileName>fonts.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\fonts.c</FilePath>
+            </File>
+            <File>
+              <FileName>fonts.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\fonts.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

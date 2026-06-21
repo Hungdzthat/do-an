@@ -31,4 +31,7 @@ spi/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_tim.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_tim_ex.h \
   ..\Core\Inc\Analog_signal.h ..\Core\Inc\main.h \
-  ..\Core\Inc\st7735_dma.h E:\ARM\ARMCLANG\Bin\..\include\math.h
+  ..\Core\Inc\st7735_dma.h E:\ARM\ARMCLANG\Bin\..\include\stdio.h \
+  E:\ARM\ARMCLANG\Bin\..\include\stdlib.h \
+  E:\ARM\ARMCLANG\Bin\..\include\string.h \
+  E:\ARM\ARMCLANG\Bin\..\include\math.h
