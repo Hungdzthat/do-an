@@ -1,4 +1,5 @@
 do an\stm32f1xx_it.o: ../Core/Src/stm32f1xx_it.c
+do an\stm32f1xx_it.o: ../Core/Inc/stm32f1xx_it.h
 do an\stm32f1xx_it.o: ../Core/Inc/main.h
 do an\stm32f1xx_it.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h
 do an\stm32f1xx_it.o: ../Core/Inc/stm32f1xx_hal_conf.h
@@ -27,7 +28,7 @@ do an\stm32f1xx_it.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_adc_ex.h
 do an\stm32f1xx_it.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 do an\stm32f1xx_it.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
 do an\stm32f1xx_it.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
+do an\stm32f1xx_it.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h
 do an\stm32f1xx_it.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 do an\stm32f1xx_it.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 do an\stm32f1xx_it.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
-do an\stm32f1xx_it.o: ../Core/Inc/stm32f1xx_it.h

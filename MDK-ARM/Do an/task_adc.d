@@ -1,4 +1,5 @@
 do an\task_adc.o: ..\Core\Src\task_adc.c
+do an\task_adc.o: ../Core/Inc/task_adc.h
 do an\task_adc.o: ../Core/Inc/main.h
 do an\task_adc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h
 do an\task_adc.o: ../Core/Inc/stm32f1xx_hal_conf.h
@@ -27,10 +28,10 @@ do an\task_adc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_adc_ex.h
 do an\task_adc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 do an\task_adc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
 do an\task_adc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
+do an\task_adc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h
 do an\task_adc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 do an\task_adc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 do an\task_adc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
-do an\task_adc.o: ../Core/Inc/task_adc.h
 do an\task_adc.o: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h
 do an\task_adc.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
 do an\task_adc.o: ../Core/Inc/FreeRTOSConfig.h
@@ -46,6 +47,6 @@ do an\task_adc.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h
 do an\task_adc.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h
 do an\task_adc.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h
 do an\task_adc.o: ../Core/Inc/osc_types.h
+do an\task_adc.o: ../Core/Inc/Analog_signal.h
 do an\task_adc.o: ../Core/Inc/osc_rtos.h
 do an\task_adc.o: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h
-do an\task_adc.o: ../Core/Inc/Analog_signal.h

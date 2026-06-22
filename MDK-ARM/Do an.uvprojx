@@ -477,6 +477,31 @@
               <FileType>5</FileType>
               <FilePath>..\Core\Inc\Analog_signal.h</FilePath>
             </File>
+            <File>
+              <FileName>st7735_dma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\st7735_dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>fonts.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\fonts.c</FilePath>
+            </File>
+            <File>
+              <FileName>fonts.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\fonts.h</FilePath>
+            </File>
+            <File>
+              <FileName>st7735_dma.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\st7735_dma.h</FilePath>
+            </File>
+            <File>
+              <FileName>Analog_signal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\Analog_signal.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -561,6 +586,11 @@
               <FileName>stm32f1xx_hal_uart.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_uart.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f1xx_hal_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_spi.c</FilePath>
             </File>
           </Files>
         </Group>

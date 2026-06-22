@@ -40,4 +40,34 @@ void StartTaskDSP(void const *argument)
             osMailFree(myQueue01Handle, pIn);
         }
     }
+}/* --- Implement missing dsp_ functions --- */
+float dsp_calcVpp(const uint16_t *buf) {
+    uint16_t max = 0, min = 4095;
+    for(int i = 0; i < SAMPLE_SIZE; i++) {
+        if(buf[i] > max) max = buf[i];
+        if(buf[i] < min) min = buf[i];
+    }
+    return (max - min) * 3.3f / 4096.0f; 
+}
+float dsp_calcVrms(const uint16_t *buf) {
+    return dsp_calcVpp(buf) / 2.8284f;
+}
+float dsp_calcFreq(const uint16_t *buf) {
+    int crossings = 0;
+    uint16_t mid = 2048;
+    for(int i = 1; i < SAMPLE_SIZE; i++) {
+        if(buf[i-1] < mid && buf[i] >= mid) {
+            crossings++;
+        }
+    }
+    return crossings * 10.0f;
+}
+uint8_t dsp_findTrig(const uint16_t *buf) {
+    uint16_t mid = 2048;
+    for(int i = 1; i < 200; i++) {
+        if(buf[i-1] < mid && buf[i] >= mid) {
+            return (uint8_t)i;
+        }
+    }
+    return 0;
 }

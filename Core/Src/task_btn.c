@@ -37,3 +37,32 @@ void StartTaskBtn(void const *argument) {
     osDelay(50); /* Debounce + nhuong CPU */
   }
 }
+
+/* --- Implement missing Btn_ functions --- */
+uint8_t Btn_IsSelPressed(void)   { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0) == GPIO_PIN_RESET; }
+uint8_t Btn_IsPlusPressed(void)  { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == GPIO_PIN_RESET; }
+uint8_t Btn_IsMinusPressed(void) { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2) == GPIO_PIN_RESET; }
+uint8_t Btn_IsInfoPressed(void)  { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_10) == GPIO_PIN_RESET; }
+uint8_t Btn_IsHoldPressed(void)  { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11) == GPIO_PIN_RESET; }
+
+uint8_t Btn_GetNextSelMode(uint8_t currentMode) {
+    if (currentMode == SEL_VDIV) return SEL_TIMEDIV;
+    return SEL_VDIV;
+}
+
+void Btn_ApplyPlus(OscConfig_t *config) {
+    if (config->selMode == SEL_VDIV) {
+        config->vdivScale *= 1.2f;
+    } else {
+        if (config->timeDivMs < 100) config->timeDivMs += 5;
+    }
+}
+
+void Btn_ApplyMinus(OscConfig_t *config) {
+    if (config->selMode == SEL_VDIV) {
+        config->vdivScale /= 1.2f;
+    } else {
+        if (config->timeDivMs > 5) config->timeDivMs -= 5;
+    }
+}
+

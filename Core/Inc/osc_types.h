@@ -1,9 +1,9 @@
-﻿#ifndef OSC_TYPES_H
+#ifndef OSC_TYPES_H
 #define OSC_TYPES_H
 
 #include <stdint.h>
 
-#define SAMPLE_SIZE  128
+#define SAMPLE_SIZE  640
 
 typedef enum {
     SEL_VDIV    = 0,

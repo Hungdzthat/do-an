@@ -1,4 +1,4 @@
-﻿#include "Analog_signal.h"
+#include "Analog_signal.h"
 #include "osc_rtos.h"
 #include "stm32f1xx_hal.h"
 
@@ -11,14 +11,14 @@ volatile uint8_t g_adc_half_flag = 0;
 
 void Analog_Signal_Init(void) {
   HAL_ADC_Start(&hadc2);
-  /* Bật DMA chạy liên tục (Circular mode). Cần cấu hình DMA là Circular trong
+  /* B?t DMA ch?y li�n t?c (Circular mode). C?n c?u h�nh DMA l� Circular trong
    * CubeMX */
   HAL_ADCEx_MultiModeStart_DMA(&hadc1, (uint32_t *)ADC_VAL,
                                ADC_BUFFER_SIZE * 2);
   HAL_TIM_Base_Start(&htim3);
 }
 
-/* Ngắt DMA khi đổ đầy nửa mảng đầu (0 -> ADC_BUFFER_SIZE-1) */
+/* Ng?t DMA khi d? d?y n?a m?ng d?u (0 -> ADC_BUFFER_SIZE-1) */
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
   if (hadc->Instance == ADC1) {
     g_adc_half_flag = 0;
@@ -28,7 +28,7 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
   }
 }
 
-/* Ngắt DMA khi đổ đầy nửa mảng sau (ADC_BUFFER_SIZE -> ADC_BUFFER_SIZE*2 - 1)
+/* Ng?t DMA khi d? d?y n?a m?ng sau (ADC_BUFFER_SIZE -> ADC_BUFFER_SIZE*2 - 1)
  */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
   if (hadc->Instance == ADC1) {
