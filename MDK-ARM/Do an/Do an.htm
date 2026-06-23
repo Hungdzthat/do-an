@@ -3,7 +3,7 @@
 <title>Static Call Graph - [Do an\Do an.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image Do an\Do an.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Tue Jun 23 16:53:45 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Tue Jun 23 17:05:27 2026
 <BR><P>
 <H3>Maximum Stack Usage =        348 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -1408,34 +1408,34 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__printf
 </UL>
 
-<P><STRONG><a name="[f3]"></a>dsp_calcFreq</STRONG> (Thumb, 130 bytes, Stack size 24 bytes, task_dsp.o(i.dsp_calcFreq))
+<P><STRONG><a name="[f3]"></a>dsp_calcFreq</STRONG> (Thumb, 146 bytes, Stack size 24 bytes, task_dsp.o(i.dsp_calcFreq))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = dsp_calcFreq &rArr; __aeabi_fdiv
 </UL>
-<BR>[Calls]<UL><LI><a href="#[f8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f
-<LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fdiv
-</UL>
-<BR>[Called By]<UL><LI><a href="#[45]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartTaskDSP
-</UL>
-
-<P><STRONG><a name="[f1]"></a>dsp_calcVpp</STRONG> (Thumb, 56 bytes, Stack size 8 bytes, task_dsp.o(i.dsp_calcVpp))
-<BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = dsp_calcVpp &rArr; __aeabi_fmul
-</UL>
-<BR>[Calls]<UL><LI><a href="#[f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
+<BR>[Calls]<UL><LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
 <LI><a href="#[f8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f
 <LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fdiv
 </UL>
 <BR>[Called By]<UL><LI><a href="#[45]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartTaskDSP
 </UL>
 
-<P><STRONG><a name="[f2]"></a>dsp_calcVrms</STRONG> (Thumb, 154 bytes, Stack size 24 bytes, task_dsp.o(i.dsp_calcVrms))
+<P><STRONG><a name="[f1]"></a>dsp_calcVpp</STRONG> (Thumb, 52 bytes, Stack size 8 bytes, task_dsp.o(i.dsp_calcVpp))
+<BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = dsp_calcVpp
+</UL>
+<BR>[Calls]<UL><LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ARM_scalbnf
+<LI><a href="#[f8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f
+</UL>
+<BR>[Called By]<UL><LI><a href="#[45]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartTaskDSP
+</UL>
+
+<P><STRONG><a name="[f2]"></a>dsp_calcVrms</STRONG> (Thumb, 150 bytes, Stack size 24 bytes, task_dsp.o(i.dsp_calcVrms))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = dsp_calcVrms &rArr; __aeabi_fmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ARM_scalbnf
-<LI><a href="#[f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
+<LI><a href="#[fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
 <LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
 <LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fdiv
 <LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fsub
-<LI><a href="#[fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
+<LI><a href="#[f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
 </UL>
 <BR>[Called By]<UL><LI><a href="#[45]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartTaskDSP
 </UL>
@@ -2088,7 +2088,7 @@ Global Symbols
 <LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__fpl_dretinf
 </UL>
 
-<P><STRONG><a name="[fa]"></a>__aeabi_fadd</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, faddsub_clz.o(x$fpl$fadd))
+<P><STRONG><a name="[f9]"></a>__aeabi_fadd</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, faddsub_clz.o(x$fpl$fadd))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = __aeabi_fadd
 </UL>
 <BR>[Called By]<UL><LI><a href="#[f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dsp_calcVrms
@@ -2110,7 +2110,6 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = __aeabi_fdiv
 </UL>
 <BR>[Called By]<UL><LI><a href="#[f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dsp_calcVrms
-<LI><a href="#[f1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dsp_calcVpp
 <LI><a href="#[f3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dsp_calcFreq
 <LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BuildWaveform
 </UL>
@@ -2149,16 +2148,16 @@ Global Symbols
 
 <P><STRONG><a name="[8e]"></a>__aeabi_ui2f</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, fflt_clz.o(x$fpl$ffltu))
 <BR><BR>[Called By]<UL><LI><a href="#[f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dsp_calcVrms
+<LI><a href="#[f3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dsp_calcFreq
 <LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BuildWaveform
 </UL>
 
 <P><STRONG><a name="[180]"></a>_ffltu</STRONG> (Thumb, 38 bytes, Stack size 0 bytes, fflt_clz.o(x$fpl$ffltu), UNUSED)
 
-<P><STRONG><a name="[f9]"></a>__aeabi_fmul</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, fmul.o(x$fpl$fmul))
+<P><STRONG><a name="[fa]"></a>__aeabi_fmul</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, fmul.o(x$fpl$fmul))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = __aeabi_fmul
 </UL>
 <BR>[Called By]<UL><LI><a href="#[f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dsp_calcVrms
-<LI><a href="#[f1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dsp_calcVpp
 </UL>
 
 <P><STRONG><a name="[147]"></a>_fmul</STRONG> (Thumb, 258 bytes, Stack size 16 bytes, fmul.o(x$fpl$fmul), UNUSED)
@@ -2212,6 +2211,7 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[142]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__fpl_fcheck_NaN1
 </UL>
 <BR>[Called By]<UL><LI><a href="#[f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dsp_calcVrms
+<LI><a href="#[f1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dsp_calcVpp
 <LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BuildWaveform
 </UL>
 
