@@ -28,6 +28,7 @@
 #include "task_dsp.h"
 #include "task_display.h"
 #include "task_btn.h"
+#include "st7735_dma.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -128,8 +129,8 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+  ST7735_Init();
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 1);
   /* USER CODE END 2 */
 
   /* Create the mutex(es) */
@@ -158,7 +159,7 @@ int main(void)
  // XOA
 
   /* USER CODE BEGIN RTOS_QUEUES */
- 	osMailQDef(myQueue01, 4, ADCData_t);
+ 	osMailQDef(myQueue01, 2, ADCData_t);
 	myQueue01Handle = osMailCreate(osMailQ(myQueue01), NULL);
 	
 	osMailQDef(myQueue02, 2, DispData_t);
@@ -179,7 +180,7 @@ int main(void)
   myTask03Handle = osThreadCreate(osThread(myTask03), NULL);
 
   /* definition and creation of myTask04 */
-  osThreadDef(myTask04, StartTaskBtn, osPriorityLow, 0, 256);
+  osThreadDef(myTask04, StartTaskBtn, osPriorityHigh, 0, 256);
   myTask04Handle = osThreadCreate(osThread(myTask04), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -343,22 +344,22 @@ static void MX_GPIO_Init(void) {
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  /*Configure GPIO pin Output Level for TFT (PB12: CS, PB13: DC, PB14: RST) */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14,
+  /*Configure GPIO pin Output Level for TFT (PB0: CS, PB1: DC, PB10: RST) */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_10,
                     GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PB12 PB13 PB14 (TFT Control) */
-  GPIO_InitStruct.Pin = GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14;
+  /*Configure GPIO pins : PB0 PB1 PB10 (TFT Control) */
+  GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB0 PB1 PB2 PB10 PB11 (Buttons) */
-  GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_10 | GPIO_PIN_11;
+  /*Configure GPIO pins : PA8 PA9 PA10 PA11 PA12 (Buttons) */
+  GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -431,7 +432,7 @@ static void MX_SPI1_Init(void) {
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;

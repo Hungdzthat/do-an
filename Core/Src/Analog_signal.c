@@ -10,15 +10,17 @@ uint32_t ADC_VAL[ADC_BUFFER_SIZE * 2];
 volatile uint8_t g_adc_half_flag = 0;
 
 void Analog_Signal_Init(void) {
+  /* Calibrate both ADCs before use - removes DC offset noise */
+  HAL_ADCEx_Calibration_Start(&hadc1);
+  HAL_ADCEx_Calibration_Start(&hadc2);
+
   HAL_ADC_Start(&hadc2);
-  /* B?t DMA ch?y liên t?c (Circular mode). C?n c?u hình DMA là Circular trong
-   * CubeMX */
   HAL_ADCEx_MultiModeStart_DMA(&hadc1, (uint32_t *)ADC_VAL,
                                ADC_BUFFER_SIZE * 2);
   HAL_TIM_Base_Start(&htim3);
 }
 
-/* Ng?t DMA khi d? d?y n?a m?ng d?u (0 -> ADC_BUFFER_SIZE-1) */
+/* DMA half-complete: first half ready */
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
   if (hadc->Instance == ADC1) {
     g_adc_half_flag = 0;
@@ -28,8 +30,7 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
   }
 }
 
-/* Ng?t DMA khi d? d?y n?a m?ng sau (ADC_BUFFER_SIZE -> ADC_BUFFER_SIZE*2 - 1)
- */
+/* DMA full-complete: second half ready */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
   if (hadc->Instance == ADC1) {
     g_adc_half_flag = 1;

@@ -6,6 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define ST7735_CS_Pin GPIO_PIN_0
+#define ST7735_CS_GPIO_Port GPIOB
+#define ST7735_DC_Pin GPIO_PIN_1
+#define ST7735_DC_GPIO_Port GPIOB
+#define ST7735_RES_Pin GPIO_PIN_10
+#define ST7735_RES_GPIO_Port GPIOB
 
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t waveY[160];

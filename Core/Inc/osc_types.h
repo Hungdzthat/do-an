@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define SAMPLE_SIZE  640
+#define SAMPLE_SIZE  320
 
 typedef enum {
     SEL_VDIV    = 0,
@@ -27,7 +27,7 @@ typedef struct {
     float    vpp;
     float    vrms;
     float    freq;
-    uint8_t  trigIdx;
+    uint16_t trigIdx;   /* was uint8_t - overflows for index > 255 */
 } DispData_t;
 
 /* Oscilloscope config - protected by gConfigMutex */

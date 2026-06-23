@@ -36,3 +36,14 @@ do an\st7735_dma.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 do an\st7735_dma.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
 do an\st7735_dma.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 do an\st7735_dma.o: ../Core/Inc/fonts.h
+do an\st7735_dma.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+do an\st7735_dma.o: ../Core/Inc/FreeRTOSConfig.h
+do an\st7735_dma.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+do an\st7735_dma.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+do an\st7735_dma.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+do an\st7735_dma.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3/portmacro.h
+do an\st7735_dma.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+do an\st7735_dma.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h
+do an\st7735_dma.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h
+do an\st7735_dma.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
+do an\st7735_dma.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h

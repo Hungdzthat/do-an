@@ -1,51 +1,69 @@
 #include "task_btn.h"
 #include "osc_rtos.h"
-/* Cau hinh mac dinh khi khoi dong */
-OscConfig_t gConfig = {.vdivScale = 1.0f,
-                       .timeDivMs = 5,
-                       .showInfo = 1,
-                       .selMode = SEL_VDIV,
-                       .holdRun = OSC_RUN};
+
+/* Default config at startup */
+OscConfig_t gConfig = {
+    .vdivScale = 1.0f,
+    .timeDivMs = 5,
+    .showInfo  = 1,
+    .selMode   = SEL_VDIV,
+    .holdRun   = OSC_RUN
+};
 
 void StartTaskBtn(void const *argument) {
-  for (;;) {
-    /* Doc toan bo trang thai nut TRUOC khi chiem mutex
-     * -> giam thoi gian giu mutex, tranh block task khac */
-    uint8_t isSel = Btn_IsSelPressed();
-    uint8_t isPlus = Btn_IsPlusPressed();
-    uint8_t isMinus = Btn_IsMinusPressed();
-    uint8_t isInfo = Btn_IsInfoPressed();
-    uint8_t isHold = Btn_IsHoldPressed();
+  static uint8_t prevSel = 0, prevPlus = 0, prevMinus = 0, prevInfo = 0, prevHold = 0;
 
-    if (isSel || isPlus || isMinus || isInfo || isHold) {
+  for (;;) {
+    /* Read all button states BEFORE taking mutex
+     * -> minimize mutex hold time, avoid blocking other tasks */
+    uint8_t curSel   = Btn_IsSelPressed();
+    uint8_t curPlus  = Btn_IsPlusPressed();
+    uint8_t curMinus = Btn_IsMinusPressed();
+    uint8_t curInfo  = Btn_IsInfoPressed();
+    uint8_t curHold  = Btn_IsHoldPressed();
+
+    uint8_t trigSel   = (curSel && !prevSel);
+    uint8_t trigPlus  = (curPlus && !prevPlus);
+    uint8_t trigMinus = (curMinus && !prevMinus);
+    uint8_t trigInfo  = (curInfo && !prevInfo);
+    uint8_t trigHold  = (curHold && !prevHold);
+
+    prevSel   = curSel;
+    prevPlus  = curPlus;
+    prevMinus = curMinus;
+    prevInfo  = curInfo;
+    prevHold  = curHold;
+
+    if (trigSel || trigPlus || trigMinus || trigInfo || trigHold) {
       osMutexWait(gConfigMutexHandle, osWaitForever);
 
-      if (isSel)
+      if (trigSel)
         gConfig.selMode = Btn_GetNextSelMode(gConfig.selMode);
-      if (isPlus)
+      if (trigPlus)
         Btn_ApplyPlus(&gConfig);
-      if (isMinus)
+      if (trigMinus)
         Btn_ApplyMinus(&gConfig);
-      if (isInfo)
+      if (trigInfo)
         gConfig.showInfo = !gConfig.showInfo;
-      if (isHold)
-        gConfig.holdRun = !gConfig.holdRun;
+      if (trigHold)
+        gConfig.holdRun = (gConfig.holdRun == OSC_RUN) ? OSC_HOLD : OSC_RUN;
 
       osMutexRelease(gConfigMutexHandle);
     }
 
-    osDelay(50); /* Debounce + nhuong CPU */
+    osDelay(50); /* Debounce + yield CPU */
   }
 }
 
-/* --- Implement missing Btn_ functions --- */
-uint8_t Btn_IsSelPressed(void)   { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0) == GPIO_PIN_RESET; }
-uint8_t Btn_IsPlusPressed(void)  { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == GPIO_PIN_RESET; }
-uint8_t Btn_IsMinusPressed(void) { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2) == GPIO_PIN_RESET; }
-uint8_t Btn_IsInfoPressed(void)  { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_10) == GPIO_PIN_RESET; }
-uint8_t Btn_IsHoldPressed(void)  { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11) == GPIO_PIN_RESET; }
+/* --- Button GPIO read functions --- */
+/* All buttons: GPIOA, active-low (pull-up configured in MX_GPIO_Init) */
+uint8_t Btn_IsSelPressed(void)   { return HAL_GPIO_ReadPin(BTN_SEL_PORT,   BTN_SEL_PIN)   == GPIO_PIN_RESET; }
+uint8_t Btn_IsPlusPressed(void)  { return HAL_GPIO_ReadPin(BTN_PLUS_PORT,  BTN_PLUS_PIN)  == GPIO_PIN_RESET; }
+uint8_t Btn_IsMinusPressed(void) { return HAL_GPIO_ReadPin(BTN_MINUS_PORT, BTN_MINUS_PIN) == GPIO_PIN_RESET; }
+uint8_t Btn_IsInfoPressed(void)  { return HAL_GPIO_ReadPin(BTN_INFO_PORT,  BTN_INFO_PIN)  == GPIO_PIN_RESET; }
+uint8_t Btn_IsHoldPressed(void)  { return HAL_GPIO_ReadPin(BTN_HOLD_PORT,  BTN_HOLD_PIN)  == GPIO_PIN_RESET; }
 
-uint8_t Btn_GetNextSelMode(uint8_t currentMode) {
+SelMode_t Btn_GetNextSelMode(SelMode_t currentMode) {
     if (currentMode == SEL_VDIV) return SEL_TIMEDIV;
     return SEL_VDIV;
 }
@@ -53,6 +71,7 @@ uint8_t Btn_GetNextSelMode(uint8_t currentMode) {
 void Btn_ApplyPlus(OscConfig_t *config) {
     if (config->selMode == SEL_VDIV) {
         config->vdivScale *= 1.2f;
+        if (config->vdivScale > 10.0f) config->vdivScale = 10.0f;
     } else {
         if (config->timeDivMs < 100) config->timeDivMs += 5;
     }
@@ -61,8 +80,8 @@ void Btn_ApplyPlus(OscConfig_t *config) {
 void Btn_ApplyMinus(OscConfig_t *config) {
     if (config->selMode == SEL_VDIV) {
         config->vdivScale /= 1.2f;
+        if (config->vdivScale < 0.1f) config->vdivScale = 0.1f;
     } else {
-        if (config->timeDivMs > 5) config->timeDivMs -= 5;
+        if (config->timeDivMs > 1) config->timeDivMs -= 1;
     }
 }
-

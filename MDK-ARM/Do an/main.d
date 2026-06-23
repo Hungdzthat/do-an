@@ -56,3 +56,7 @@ do an\main.o: ../Core/Inc/task_display.h
 do an\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h
 do an\main.o: ../Core/Inc/task_btn.h
 do an\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h
+do an\main.o: ../Core/Inc/st7735_dma.h
+do an\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+do an\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+do an\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h

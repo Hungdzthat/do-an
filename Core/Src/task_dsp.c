@@ -1,11 +1,85 @@
 #include "task_dsp.h"
 #include "osc_rtos.h"
 #include "string.h"
-// Hàm do partner vi?t - ch? khai báo extern
-extern float dsp_calcVpp(const uint16_t *buf);
-extern float dsp_calcVrms(const uint16_t *buf);
-extern float dsp_calcFreq(const uint16_t *buf);
-extern uint8_t dsp_findTrig(const uint16_t *buf);
+#include "st7735_dma.h"
+#include "task_btn.h"
+
+/* ---- DSP helper functions ---- */
+
+float dsp_calcVpp(const uint16_t *buf) {
+    uint16_t vmax = 0, vmin = 4095;
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
+        if (buf[i] > vmax) vmax = buf[i];
+        if (buf[i] < vmin) vmin = buf[i];
+    }
+    return (float)(vmax - vmin) * (float)ADC_VREF_MV / (4096.0f * 1000.0f);
+}
+
+float dsp_calcVrms(const uint16_t *buf) {
+    float sum = 0;
+    for (int i = 0; i < SAMPLE_SIZE; i++)
+        sum += (float)buf[i];
+    float mean = sum / (float)SAMPLE_SIZE;
+
+    float sum_sq = 0;
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
+        float diff = (float)buf[i] - mean;
+        sum_sq += diff * diff;
+    }
+    float rms_counts = 0;
+    if (sum_sq > 0) {
+        /* Newton's method sqrt - avoid math.h */
+        float x = sum_sq / (float)SAMPLE_SIZE;
+        rms_counts = x;
+        for (int j = 0; j < 10; j++)
+            rms_counts = 0.5f * (rms_counts + x / rms_counts);
+    }
+    return rms_counts * (float)ADC_VREF_MV / (4096.0f * 1000.0f);
+}
+
+float dsp_calcFreq(const uint16_t *buf) {
+    uint16_t vmax = 0, vmin = 4095;
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
+        if (buf[i] > vmax) vmax = buf[i];
+        if (buf[i] < vmin) vmin = buf[i];
+    }
+    uint16_t mid = (vmax + vmin) / 2;
+
+    int crossings = 0;
+    int first_cross = -1;
+    int last_cross = -1;
+    for (int i = 1; i < SAMPLE_SIZE; i++) {
+        if (buf[i - 1] < mid && buf[i] >= mid) {
+            if (first_cross < 0) first_cross = i;
+            last_cross = i;
+            crossings++;
+        }
+    }
+
+    if (crossings < 2)
+        return 0.0f;
+
+    float period_samples = (float)(last_cross - first_cross) / (float)(crossings - 1);
+    return (float)ADC_FS_HZ / period_samples;
+}
+
+uint16_t dsp_findTrig(const uint16_t *buf) {
+    uint16_t vmax = 0, vmin = 4095;
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
+        if (buf[i] > vmax) vmax = buf[i];
+        if (buf[i] < vmin) vmin = buf[i];
+    }
+    uint16_t mid = (vmax + vmin) / 2;
+
+    for (int i = 1; i < (SAMPLE_SIZE / 2); i++) {
+        if (buf[i - 1] < mid && buf[i] >= mid) {
+            return (uint16_t)i;
+        }
+    }
+    return 0;
+}
+
+/* ---- Task DSP ---- */
 
 void StartTaskDSP(void const *argument)
 {
@@ -15,59 +89,33 @@ void StartTaskDSP(void const *argument)
 
     for(;;)
     {
-        // 1. Cho data cua TASKADC
         evt = osMailGet(myQueue01Handle, osWaitForever);
 
         if(evt.status == osEventMail)
         {
             pIn  = (ADCData_t*)evt.value.p;
-            pOut = (DispData_t*)osMailAlloc(myQueue02Handle, osWaitForever);
 
-            if(pOut != NULL)
-            {
-                // function...
-                pOut->vpp     = dsp_calcVpp(pIn->data);
-                pOut->vrms    = dsp_calcVrms(pIn->data);
-                pOut->freq    = dsp_calcFreq(pIn->data);
-                pOut->trigIdx = dsp_findTrig(pIn->data);
-                memcpy(pOut->wave, pIn->data, SAMPLE_SIZE * sizeof(uint16_t));
+            osMutexWait(gConfigMutexHandle, osWaitForever);
+            uint8_t hold = (gConfig.holdRun == OSC_HOLD);
+            osMutexRelease(gConfigMutexHandle);
 
-                // 3. Gui sang TaskDisplay
-                osMailPut(myQueue02Handle, pOut);
+            if (!hold) {
+                /* Use timeout to prevent deadlock if display is busy */
+                pOut = (DispData_t*)osMailAlloc(myQueue02Handle, 10);
+
+                if(pOut != NULL)
+                {
+                    memcpy(pOut->wave, pIn->data, SAMPLE_SIZE * sizeof(uint16_t));
+                    pOut->vpp     = dsp_calcVpp(pIn->data);
+                    pOut->vrms    = dsp_calcVrms(pIn->data);
+                    pOut->freq    = dsp_calcFreq(pIn->data);
+                    pOut->trigIdx = dsp_findTrig(pIn->data);
+
+                    osMailPut(myQueue02Handle, pOut);
+                }
             }
-
-            // 4. Tra o nho
+            /* Always free input regardless of output allocation */
             osMailFree(myQueue01Handle, pIn);
         }
     }
-}/* --- Implement missing dsp_ functions --- */
-float dsp_calcVpp(const uint16_t *buf) {
-    uint16_t max = 0, min = 4095;
-    for(int i = 0; i < SAMPLE_SIZE; i++) {
-        if(buf[i] > max) max = buf[i];
-        if(buf[i] < min) min = buf[i];
-    }
-    return (max - min) * 3.3f / 4096.0f; 
-}
-float dsp_calcVrms(const uint16_t *buf) {
-    return dsp_calcVpp(buf) / 2.8284f;
-}
-float dsp_calcFreq(const uint16_t *buf) {
-    int crossings = 0;
-    uint16_t mid = 2048;
-    for(int i = 1; i < SAMPLE_SIZE; i++) {
-        if(buf[i-1] < mid && buf[i] >= mid) {
-            crossings++;
-        }
-    }
-    return crossings * 10.0f;
-}
-uint8_t dsp_findTrig(const uint16_t *buf) {
-    uint16_t mid = 2048;
-    for(int i = 1; i < 200; i++) {
-        if(buf[i-1] < mid && buf[i] >= mid) {
-            return (uint8_t)i;
-        }
-    }
-    return 0;
 }

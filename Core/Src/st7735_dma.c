@@ -6,17 +6,21 @@
 /* -------------------------------------------------------------------------- */
 /*  GPIO helpers */
 /* -------------------------------------------------------------------------- */
-#define TFT_CS_LOW() HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET)
-#define TFT_CS_HIGH() HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET)
-#define TFT_DC_CMD() HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET)
-#define TFT_DC_DATA() HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET)
+#define TFT_CS_LOW() HAL_GPIO_WritePin(ST7735_CS_GPIO_Port, ST7735_CS_Pin, GPIO_PIN_RESET)
+#define TFT_CS_HIGH() HAL_GPIO_WritePin(ST7735_CS_GPIO_Port, ST7735_CS_Pin, GPIO_PIN_SET)
+#define TFT_DC_CMD() HAL_GPIO_WritePin(ST7735_DC_GPIO_Port, ST7735_DC_Pin, GPIO_PIN_RESET)
+#define TFT_DC_DATA() HAL_GPIO_WritePin(ST7735_DC_GPIO_Port, ST7735_DC_Pin, GPIO_PIN_SET)
 
 /* -------------------------------------------------------------------------- */
 /*  SPI double-buffer for DMA */
 /* -------------------------------------------------------------------------- */
 static uint8_t lineBuffer[2][320];
 static volatile uint8_t pingPong = 0;
-volatile uint8_t spiBusy = 0;
+
+#include "FreeRTOS.h"
+#include "semphr.h"
+static SemaphoreHandle_t spiDmaSem = NULL;
+static StaticSemaphore_t spiDmaSemBuffer;
 
 /* -------------------------------------------------------------------------- */
 /*  Oscilloscope colour palette (RGB565) */
@@ -53,10 +57,17 @@ static void writeDataTFT(uint8_t data) {
 /*  ST7735 initialisation */
 /* -------------------------------------------------------------------------- */
 void ST7735_Init(void) {
+  if (spiDmaSem == NULL) {
+    spiDmaSem = xSemaphoreCreateBinaryStatic(&spiDmaSemBuffer);
+    xSemaphoreGive(spiDmaSem);
+  }
+
+  TFT_CS_HIGH();
+
   /* HW RESET */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, 0);
+  HAL_GPIO_WritePin(ST7735_RES_GPIO_Port, ST7735_RES_Pin, GPIO_PIN_RESET);
   HAL_Delay(200);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, 1);
+  HAL_GPIO_WritePin(ST7735_RES_GPIO_Port, ST7735_RES_Pin, GPIO_PIN_SET);
   HAL_Delay(200);
   /* SW RESET */
   writeCMDTFT(0x01);
@@ -142,7 +153,19 @@ void ST7735_Init(void) {
   writeCMDTFT(0x3A);
   writeDataTFT(0x05); /* Interface Pixel Format      */
   writeCMDTFT(0x29);  /* Display ON                  */
-  HAL_Delay(100);
+  HAL_Delay(120);
+
+  /* Fill entire screen black to clear random GRAM contents (white screen fix) */
+  ST7735_SetWindow(0, 0, TFT_WIDTH - 1, TFT_HEIGHT - 1);
+  TFT_CS_LOW();
+  TFT_DC_DATA();
+  {
+    uint8_t zero[2] = {0, 0};
+    for (int i = 0; i < TFT_WIDTH * TFT_HEIGHT; i++) {
+      HAL_SPI_Transmit(&hspi1, zero, 2, 10);
+    }
+  }
+  TFT_CS_HIGH();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -168,8 +191,13 @@ void ST7735_SetWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1) {
 /*  DMA TX complete callback */
 /* -------------------------------------------------------------------------- */
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
-  if (hspi->Instance == SPI1)
-    spiBusy = 0;
+  if (hspi->Instance == SPI1) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    if (spiDmaSem != NULL) {
+      xSemaphoreGiveFromISR(spiDmaSem, &xHigherPriorityTaskWoken);
+    }
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -306,24 +334,24 @@ void ST7735_RenderFrame(uint8_t waveY[], unsigned int vol_div_mv, unsigned int t
   /* Inline lambda: compute RGB565 colour for pixel (x, y) */
   /* Implemented as a static inline to avoid code-size macros */
 
-  /* Build & send line 0 (before the loop to prime the DMA) */
+  /* Build & send line 0 (y=0 is always a horizontal grid row since 0%16==0) */
   {
     uint8_t *buf = lineBuffer[0];
     for (int x = 0; x < TFT_WIDTH; x++) {
-      uint16_t c = COLOR_BG;
-      if (x % 16 == 0)
-        c = COLOR_GRID_V;
-      /* y=0: horizontal grid row - solid gray */
-      c = COLOR_GRID_H;
-      /* wave */
+      uint16_t c = COLOR_GRID_H; /* y=0: always a grid row */
+
+      /* Vertical grid intersection - same colour, no change needed */
+
+      /* Waveform on y=0 (overrides grid) */
       if (yLo[x] == 0)
         c = COLOR_WAVE;
+
       buf[x * 2] = c >> 8;
       buf[x * 2 + 1] = c & 0xFF;
     }
   }
   pingPong = 0;
-  spiBusy = 1;
+  xSemaphoreTake(spiDmaSem, portMAX_DELAY);
   HAL_SPI_Transmit_DMA(&hspi1, lineBuffer[0], TFT_WIDTH * 2);
 
   for (int y = 1; y < TFT_HEIGHT; y++) {
@@ -364,14 +392,13 @@ void ST7735_RenderFrame(uint8_t waveY[], unsigned int vol_div_mv, unsigned int t
       buf[x * 2 + 1] = c & 0xFF;
     }
 
-    while (spiBusy)
-      ;
     pingPong = nextBuf;
-    spiBusy = 1;
+    xSemaphoreTake(spiDmaSem, portMAX_DELAY);
     HAL_SPI_Transmit_DMA(&hspi1, buf, TFT_WIDTH * 2);
   }
 
-  while (spiBusy)
-    ;
+  xSemaphoreTake(spiDmaSem, portMAX_DELAY);
+  xSemaphoreGive(spiDmaSem);
   TFT_CS_HIGH();
 }
+

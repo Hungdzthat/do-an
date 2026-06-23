@@ -126,3 +126,4 @@ void HAL_ResumeTick(void) {
   /* Enable TIM4 Update interrupt */
   __HAL_TIM_ENABLE_IT(&htim4, TIM_IT_UPDATE);
 }
+

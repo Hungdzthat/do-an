@@ -1,31 +1,36 @@
-﻿#ifndef TASK_BTN_H
+#ifndef TASK_BTN_H
 #define TASK_BTN_H
 
 #include "main.h"
 #include "cmsis_os.h"
 #include "osc_types.h"
 
-#define BTN_MODE_PIN    GPIO_PIN_1
-#define BTN_MODE_PORT   GPIOA
+/* Button GPIO mapping (matches MX_GPIO_Init in main.c)
+ * All buttons on GPIOA, active-low with internal pull-up */
+#define BTN_SEL_PIN     GPIO_PIN_8
+#define BTN_SEL_PORT    GPIOA
 
-#define BTN_V_PIN       GPIO_PIN_2
-#define BTN_V_PORT      GPIOA
+#define BTN_PLUS_PIN    GPIO_PIN_9
+#define BTN_PLUS_PORT   GPIOA
 
-#define BTN_TIME_PIN    GPIO_PIN_3
-#define BTN_TIME_PORT   GPIOA
+#define BTN_MINUS_PIN   GPIO_PIN_10
+#define BTN_MINUS_PORT  GPIOA
 
-#define BTN_INFO_PIN    GPIO_PIN_4
+#define BTN_INFO_PIN    GPIO_PIN_11
 #define BTN_INFO_PORT   GPIOA
 
-/* Bien cau hinh - dinh nghia trong task_btn.c */
+#define BTN_HOLD_PIN    GPIO_PIN_12
+#define BTN_HOLD_PORT   GPIOA
+
+/* Global config - defined in task_btn.c */
 extern OscConfig_t gConfig;
 
-// Mutex
+/* Mutex */
 extern osMutexId   gConfigMutexHandle;
 
 void StartTaskBtn(void const *argument);
 
-/* Prototypes thay cho Button_signal.h (để IDE hết báo đỏ) */
+/* Button read functions */
 extern uint8_t Btn_IsSelPressed(void);
 extern uint8_t Btn_IsPlusPressed(void);
 extern uint8_t Btn_IsMinusPressed(void);
