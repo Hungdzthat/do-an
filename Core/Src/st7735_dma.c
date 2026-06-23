@@ -56,6 +56,10 @@ static void writeDataTFT(uint8_t data) {
 /* -------------------------------------------------------------------------- */
 /*  ST7735 initialisation */
 /* -------------------------------------------------------------------------- */
+static void DelayMs(uint32_t ms) {
+  for (volatile uint32_t i = 0; i < ms * 12000; i++);
+}
+
 void ST7735_Init(void) {
   if (spiDmaSem == NULL) {
     spiDmaSem = xSemaphoreCreateBinaryStatic(&spiDmaSemBuffer);
@@ -66,15 +70,15 @@ void ST7735_Init(void) {
 
   /* HW RESET */
   HAL_GPIO_WritePin(ST7735_RES_GPIO_Port, ST7735_RES_Pin, GPIO_PIN_RESET);
-  HAL_Delay(200);
+  DelayMs(200);
   HAL_GPIO_WritePin(ST7735_RES_GPIO_Port, ST7735_RES_Pin, GPIO_PIN_SET);
-  HAL_Delay(200);
+  DelayMs(200);
   /* SW RESET */
   writeCMDTFT(0x01);
-  HAL_Delay(120);
+  DelayMs(120);
   /* SLEEP OUT */
   writeCMDTFT(0x11);
-  HAL_Delay(200);
+  DelayMs(200);
 
   writeCMDTFT(0xB1);
   writeDataTFT(0x01);
@@ -153,7 +157,7 @@ void ST7735_Init(void) {
   writeCMDTFT(0x3A);
   writeDataTFT(0x05); /* Interface Pixel Format      */
   writeCMDTFT(0x29);  /* Display ON                  */
-  HAL_Delay(120);
+  DelayMs(120);
 
   /* Fill entire screen black to clear random GRAM contents (white screen fix) */
   ST7735_SetWindow(0, 0, TFT_WIDTH - 1, TFT_HEIGHT - 1);
