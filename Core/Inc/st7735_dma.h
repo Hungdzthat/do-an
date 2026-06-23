@@ -30,9 +30,8 @@ extern uint8_t waveY[160];
  *   System clock  : HSI/2 × PLL×14 = 56 MHz
  *   TIM3          : PSC=0, ARR=1499  → f_TIM3 = 56 000 000 / 1500 = 37 333 Hz
  *   ADC dual-interleaved → 2 samples per TIM3 tick
- *   Effective ADC sample rate: ADC_FS_HZ = 2 × 37 333 = 74 667 Hz            */
+ *   Effective ADC sample rate is dynamic based on timebase                   */
 #define ADC_VREF_MV  3300u           /* ADC reference voltage, millivolts      */
-#define ADC_FS_HZ    74667u          /* ADC effective sample rate, Hz          */
 
 /* Derived waveform scaling is now dynamically computed in BuildWaveform */
 

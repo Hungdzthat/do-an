@@ -62,7 +62,8 @@ float dsp_calcFreq(const uint16_t *buf) {
         return 0.0f;
 
     float period_samples = (float)(last_cross - first_cross) / (float)(crossings - 1);
-    return (float)ADC_FS_HZ / period_samples;
+    float sample_rate_hz = 16.0f * 1000000.0f / (float)gConfig.timeDivUs;
+    return sample_rate_hz / period_samples;
 }
 
 uint16_t dsp_findTrig(const uint16_t *buf) {
