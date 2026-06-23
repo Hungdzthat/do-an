@@ -32,7 +32,7 @@ typedef struct {
 
 /* Oscilloscope config - protected by gConfigMutex */
 typedef struct {
-    float     vdivScale;
+    uint32_t  vdivMv;
     uint32_t  timeDivUs;
     uint8_t   showInfo;
     SelMode_t selMode;

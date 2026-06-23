@@ -46,7 +46,7 @@ void StartTaskDisplay(void const *argument) {
     if (v > 16) v = 32 - v;
     waveY[i] = (uint8_t)(48 + v); /* Range: 48..64 */
   }
-  ST7735_RenderFrame(waveY, 1000, 1000, 0);
+  ST7735_RenderFrame(waveY, 1000, 1000, 0, 0, 0, 0, 0);
 
   while (1) {
     evt = osMailGet(myQueue02Handle, osWaitForever);
@@ -58,9 +58,9 @@ void StartTaskDisplay(void const *argument) {
       BuildWaveform(pDisp);
 
       /* Render to TFT */
-      unsigned int vol_div_mv = (unsigned int)(gConfig.vdivScale * 1000.0f);
+      unsigned int vol_div_mv = (unsigned int)(gConfig.vdivMv);
       unsigned int time_div_us = (unsigned int)(gConfig.timeDivUs);
-      ST7735_RenderFrame(waveY, vol_div_mv, time_div_us, gConfig.selMode);
+      ST7735_RenderFrame(waveY, vol_div_mv, time_div_us, gConfig.selMode, gConfig.showInfo, pDisp->vrms, pDisp->freq, pDisp->vpp);
 
       osMailFree(myQueue02Handle, pDisp);
     }

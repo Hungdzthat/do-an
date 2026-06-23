@@ -253,7 +253,7 @@ void ST7735_DrawLine(int x0, int y0, int x1, int y1, uint16_t color) {
 /*    yLo / yHi    160 + 160  = 320 bytes (static, BSS)                       */
 /*    labelBit[11][160]       = 1760 bytes (static, BSS)                      */
 /* -------------------------------------------------------------------------- */
-void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_us, uint8_t selMode) {
+void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_us, uint8_t selMode, uint8_t showInfo, float vrms, float freq, float vpp) {
   /* ---- 1. Precompute oscilloscope vertical spans ---- */
   static uint8_t yLo[TFT_WIDTH];
   static uint8_t yHi[TFT_WIDTH];
@@ -279,7 +279,44 @@ void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_
   static uint8_t labelBit[11][TFT_WIDTH];
   memset(labelBit, 0, sizeof(labelBit));
 
+  static uint8_t infoBit[24][TFT_WIDTH];
+  memset(infoBit, 0, sizeof(infoBit));
+
   char lbl[24];
+
+  if (showInfo) {
+    /* Freq label: top right */
+    snprintf(lbl, sizeof(lbl), "F:%uHz", (unsigned int)freq);
+    int cx = TFT_WIDTH - 64; /* Approx 8 chars max */
+    for (const char *p = lbl; *p && cx < TFT_WIDTH; p++, cx += 8) {
+      if (*p < ' ' || *p > '~') continue;
+      int ci = (*p - ' ') * 10;
+      for (int row = 0; row < 10; row++) {
+        uint16_t bits = Font_7x10.data[ci + row];
+        for (int col = 0; col < 7; col++) {
+          int fx = cx + col;
+          if (fx >= TFT_WIDTH) break;
+          if ((bits >> (15 - col)) & 1) infoBit[row + 2][fx] = 1;
+        }
+      }
+    }
+
+    /* Vpp label: below freq */
+    snprintf(lbl, sizeof(lbl), "V:%.2fV", vpp);
+    cx = TFT_WIDTH - 64;
+    for (const char *p = lbl; *p && cx < TFT_WIDTH; p++, cx += 8) {
+      if (*p < ' ' || *p > '~') continue;
+      int ci = (*p - ' ') * 10;
+      for (int row = 0; row < 10; row++) {
+        uint16_t bits = Font_7x10.data[ci + row];
+        for (int col = 0; col < 7; col++) {
+          int fx = cx + col;
+          if (fx >= TFT_WIDTH) break;
+          if ((bits >> (15 - col)) & 1) infoBit[row + 12][fx] = 1;
+        }
+      }
+    }
+  }
 
   /* Left label: Vol/div
    * Format "773mV/d" = 7 chars × 8px = 56px; starts at x=2, ends at x=58   */
@@ -361,7 +398,6 @@ void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_
   for (int y = 1; y < TFT_HEIGHT; y++) {
     uint8_t nextBuf = pingPong ^ 1;
     uint8_t *buf = lineBuffer[nextBuf];
-    uint8_t uy = (uint8_t)y;
     uint8_t hgrid = (y % 16 == 0);
     uint8_t inLabel = (y >= LABEL_Y);
     int lrow = y - LABEL_Y;
@@ -382,8 +418,13 @@ void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_
         c = COLOR_AXIS_X;
 
       /* Waveform - red, highest priority in main area */
-      if (uy >= yLo[x] && uy <= yHi[x])
+      if (y >= yLo[x] && y <= yHi[x])
         c = COLOR_WAVE;
+
+      /* Info Box - overrides waveform and grid in top right corner */
+      if (showInfo && y < 24 && x >= (TFT_WIDTH - 66)) {
+        c = infoBit[y][x] ? 0xFFE0u : 0x0000u; /* Yellow text on Black background */
+      }
 
       /* Label strip (overrides everything) */
       if (inLabel) {
