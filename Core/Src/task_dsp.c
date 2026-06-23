@@ -75,6 +75,42 @@ float dsp_calcFreq(const uint16_t *buf) {
     return sample_rate_hz / period_samples;
 }
 
+float dsp_calcDuty(const uint16_t *buf) {
+    uint16_t vmax = 0, vmin = 4095;
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
+        if (buf[i] > vmax) vmax = buf[i];
+        if (buf[i] < vmin) vmin = buf[i];
+    }
+    /* If amplitude is very small, it's not a valid pulse */
+    if ((vmax - vmin) < 30) return 0.0f;
+
+    uint16_t mid = (vmax + vmin) / 2;
+    int crossings = 0;
+    int first_cross = -1;
+    int last_cross = -1;
+
+    for (int i = 1; i < SAMPLE_SIZE; i++) {
+        if (buf[i - 1] < mid && buf[i] >= mid) {
+            if (first_cross < 0) first_cross = i;
+            last_cross = i;
+            crossings++;
+        }
+    }
+
+    if (crossings < 2) return 0.0f;
+
+    int high_samples = 0;
+    int total_samples = 0;
+    /* Count high samples only within complete periods */
+    for (int i = first_cross; i < last_cross; i++) {
+        if (buf[i] >= mid) high_samples++;
+        total_samples++;
+    }
+
+    if (total_samples == 0) return 0.0f;
+    return ((float)high_samples / (float)total_samples) * 100.0f;
+}
+
 uint16_t dsp_findTrig(const uint16_t *buf) {
     uint16_t vmax = 0, vmin = 4095;
     for (int i = 0; i < SAMPLE_SIZE; i++) {
@@ -122,6 +158,7 @@ void StartTaskDSP(void const *argument)
                     pOut->vrms    = dsp_calcVrms(pIn->data);
                     pOut->vdc     = dsp_calcVdc(pIn->data);
                     pOut->freq    = dsp_calcFreq(pIn->data);
+                    pOut->duty    = dsp_calcDuty(pIn->data);
                     pOut->trigIdx = dsp_findTrig(pIn->data);
 
                     osMailPut(myQueue02Handle, pOut);
