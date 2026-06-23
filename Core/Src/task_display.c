@@ -7,7 +7,7 @@
 uint8_t waveY[160];
 
 void BuildWaveform(DispData_t *pDisp) {
-  unsigned int vol_div_mv = (unsigned int)(gConfig.vdivScale * 1000.0f);
+  unsigned int vol_div_mv = (unsigned int)(gConfig.vdivMv);
 
   /* Calculate voltage scale (Y axis) */
     /* Hardware frontend attenuates and biases to 1.65V (2048 counts)
