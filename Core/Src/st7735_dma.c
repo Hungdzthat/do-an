@@ -251,8 +251,23 @@ void ST7735_DrawLine(int x0, int y0, int x1, int y1, uint16_t color) {
 /*                                                                             */
 /*  Extra RAM used beyond the two 320-byte DMA line buffers:                  */
 /*    yLo / yHi    160 + 160  = 320 bytes (static, BSS)                       */
-/*    labelBit[11][160]       = 1760 bytes (static, BSS)                      */
 /* -------------------------------------------------------------------------- */
+
+static inline int IsTextPixel(int x, int y, int startX, int startY, const char *text) {
+    if (y < startY || y >= startY + 10 || x < startX) return 0;
+    int charIdx = (x - startX) / 8;
+    int charPixelX = (x - startX) % 8;
+    if (charPixelX >= 7) return 0;
+    
+    for (int i = 0; i <= charIdx; i++) {
+        if (text[i] == '\0') return 0;
+    }
+    char c = text[charIdx];
+    if (c < ' ' || c > '~') return 0;
+    
+    uint16_t bits = Font_7x10.data[(c - ' ') * 10 + (y - startY)];
+    return (bits >> (15 - charPixelX)) & 1;
+}
 void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_us, uint8_t selMode, uint8_t showInfo, float vrms, float freq, float vpp) {
   /* ---- 1. Precompute oscilloscope vertical spans ---- */
   static uint8_t yLo[TFT_WIDTH];
@@ -270,99 +285,22 @@ void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_
     }
   }
 
-  /* ---- 2. Pre-render label bitmaps (Font_7x10, height=10) ---- */
-  /*
-   * labelBit[row][col] = 1  -> pixel belongs to parameter text
-   * labelBit[row][col] = 0  -> background
-   * Size: 11 * 160 = 1760 bytes (static, in BSS)
-   */
-  static uint8_t labelBit[11][TFT_WIDTH];
-  memset(labelBit, 0, sizeof(labelBit));
-
-  static uint8_t infoBit[24][TFT_WIDTH];
-  memset(infoBit, 0, sizeof(infoBit));
-
-  char lbl[24];
-
+  /* ---- 2. Prepare text strings ---- */
+  char lblFreq[16] = {0};
+  char lblVpp[16] = {0};
   if (showInfo) {
-    /* Freq label: top right */
-    snprintf(lbl, sizeof(lbl), "F:%uHz", (unsigned int)freq);
-    int cx = TFT_WIDTH - 64; /* Approx 8 chars max */
-    for (const char *p = lbl; *p && cx < TFT_WIDTH; p++, cx += 8) {
-      if (*p < ' ' || *p > '~') continue;
-      int ci = (*p - ' ') * 10;
-      for (int row = 0; row < 10; row++) {
-        uint16_t bits = Font_7x10.data[ci + row];
-        for (int col = 0; col < 7; col++) {
-          int fx = cx + col;
-          if (fx >= TFT_WIDTH) break;
-          if ((bits >> (15 - col)) & 1) infoBit[row + 2][fx] = 1;
-        }
-      }
-    }
-
-    /* Vpp label: below freq */
-    snprintf(lbl, sizeof(lbl), "V:%.2fV", vpp);
-    cx = TFT_WIDTH - 64;
-    for (const char *p = lbl; *p && cx < TFT_WIDTH; p++, cx += 8) {
-      if (*p < ' ' || *p > '~') continue;
-      int ci = (*p - ' ') * 10;
-      for (int row = 0; row < 10; row++) {
-        uint16_t bits = Font_7x10.data[ci + row];
-        for (int col = 0; col < 7; col++) {
-          int fx = cx + col;
-          if (fx >= TFT_WIDTH) break;
-          if ((bits >> (15 - col)) & 1) infoBit[row + 12][fx] = 1;
-        }
-      }
-    }
+    snprintf(lblFreq, sizeof(lblFreq), "F:%uHz", (unsigned int)freq);
+    snprintf(lblVpp, sizeof(lblVpp), "V:%.2fV", vpp);
   }
 
-  /* Left label: Vol/div
-   * Format "773mV/d" = 7 chars × 8px = 56px; starts at x=2, ends at x=58   */
-  snprintf(lbl, sizeof(lbl), "%umV/d", vol_div_mv);
-  {
-    int cx = 2;
-    for (const char *p = lbl; *p && cx < TFT_WIDTH; p++, cx += 8) {
-      if (*p < ' ' || *p > '~')
-        continue;
-      int ci = (*p - ' ') * 10; /* Font_7x10.height = 10 */
-      for (int row = 0; row < 10; row++) {
-        uint16_t bits = Font_7x10.data[ci + row];
-        for (int col = 0; col < 7; col++) {
-          int fx = cx + col;
-          if (fx >= TFT_WIDTH)
-            break;
-          if ((bits >> (15 - col)) & 1)
-            labelBit[row][fx] = 1;
-        }
-      }
-    }
-  }
+  char lblVol[16] = {0};
+  snprintf(lblVol, sizeof(lblVol), "%umV/d", (unsigned int)vol_div_mv);
 
-  /* Right label: Time/div
-   * Each char = 7px wide, spacing = 8px. Max chars before overflow:
-   * start_x + n_chars*8 <= TFT_WIDTH  =>  start_x = TFT_WIDTH - n_chars*8
-   * "429us/d" = 7 chars → start at 160 - 56 = 104  (ends at 160)          */
-  snprintf(lbl, sizeof(lbl), "%uus/d", time_div_us);
-  {
-    int cx = TFT_WIDTH - 56; /* 7 chars × 8px = 56px; starts at x=104 */
-    for (const char *p = lbl; *p && cx < TFT_WIDTH; p++, cx += 8) {
-      if (*p < ' ' || *p > '~')
-        continue;
-      int ci = (*p - ' ') * 10;
-      for (int row = 0; row < 10; row++) {
-        uint16_t bits = Font_7x10.data[ci + row];
-        for (int col = 0; col < 7; col++) {
-          int fx = cx + col;
-          if (fx < 0 || fx >= TFT_WIDTH)
-            continue;
-          if ((bits >> (15 - col)) & 1)
-            labelBit[row][fx] = 1;
-        }
-      }
-    }
-  }
+  char lblTime[16] = {0};
+  snprintf(lblTime, sizeof(lblTime), "%uus/d", (unsigned int)time_div_us);
+  
+  uint16_t vColor = (selMode == 0) ? COLOR_LABEL : COLOR_GRID_V;
+  uint16_t tColor = (selMode == 1) ? COLOR_LABEL : COLOR_GRID_V;
 
   /* Label strip: last 11 rows of screen (y = 117..127) */
   const int LABEL_Y = TFT_HEIGHT - 11; /* = 117 */
@@ -423,15 +361,16 @@ void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_
 
       /* Info Box - overrides waveform and grid in top right corner */
       if (showInfo && y < 24 && x >= (TFT_WIDTH - 66)) {
-        c = infoBit[y][x] ? 0xFFE0u : 0x0000u; /* Yellow text on Black background */
-      }
-
-      /* Label strip (overrides everything) */
-      if (inLabel) {
+        if (IsTextPixel(x, y, TFT_WIDTH - 64, 2, lblFreq)) c = 0xFFE0u; /* Yellow text */
+        else if (IsTextPixel(x, y, TFT_WIDTH - 64, 12, lblVpp)) c = 0xFFE0u;
+        else c = 0x0000u; /* Black background */
+      } else if (inLabel) {
+        /* Label strip (overrides everything) */
         c = COLOR_LABEL_BG;
-        if (lrow >= 0 && lrow < 10 && labelBit[lrow][x]) {
-          if (x < 80) c = (selMode == 0) ? COLOR_LABEL : COLOR_GRID_V;
-          else        c = (selMode == 1) ? COLOR_LABEL : COLOR_GRID_V;
+        int lrow = y - LABEL_Y;
+        if (lrow >= 1 && lrow < 11) {
+          if (x < 80 && IsTextPixel(x, y, 2, LABEL_Y + 1, lblVol)) c = vColor;
+          else if (x >= 80 && IsTextPixel(x, y, TFT_WIDTH - 56, LABEL_Y + 1, lblTime)) c = tColor;
         }
       }
 
