@@ -6,7 +6,7 @@ extern TIM_HandleTypeDef htim3;
 /* Default config at startup */
 OscConfig_t gConfig = {
     .vdivScale = 1.0f,
-    .timeDivMs = 5,
+    .timeDivUs = 5000,
     .showInfo  = 1,
     .selMode   = SEL_VDIV,
     .holdRun   = OSC_RUN
@@ -75,8 +75,12 @@ void Btn_ApplyPlus(OscConfig_t *config) {
         config->vdivScale *= 1.2f;
         if (config->vdivScale > 10.0f) config->vdivScale = 10.0f;
     } else {
-        if (config->timeDivMs < 100) config->timeDivMs += 5;
-        __HAL_TIM_SET_AUTORELOAD(&htim3, 100 * config->timeDivMs - 1);
+        if (config->timeDivUs < 100000) {
+            if (config->timeDivUs < 1000) config->timeDivUs += 100;
+            else if (config->timeDivUs < 10000) config->timeDivUs += 1000;
+            else config->timeDivUs += 10000;
+        }
+        __HAL_TIM_SET_AUTORELOAD(&htim3, (config->timeDivUs * 9) / 2 - 1);
     }
 }
 
@@ -85,7 +89,11 @@ void Btn_ApplyMinus(OscConfig_t *config) {
         config->vdivScale /= 1.2f;
         if (config->vdivScale < 0.1f) config->vdivScale = 0.1f;
     } else {
-        if (config->timeDivMs > 1) config->timeDivMs -= 1;
-        __HAL_TIM_SET_AUTORELOAD(&htim3, 100 * config->timeDivMs - 1);
+        if (config->timeDivUs > 100) {
+            if (config->timeDivUs <= 1000) config->timeDivUs -= 100;
+            else if (config->timeDivUs <= 10000) config->timeDivUs -= 1000;
+            else config->timeDivUs -= 10000;
+        }
+        __HAL_TIM_SET_AUTORELOAD(&htim3, (config->timeDivUs * 9) / 2 - 1);
     }
 }

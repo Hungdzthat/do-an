@@ -253,7 +253,7 @@ void ST7735_DrawLine(int x0, int y0, int x1, int y1, uint16_t color) {
 /*    yLo / yHi    160 + 160  = 320 bytes (static, BSS)                       */
 /*    labelBit[11][160]       = 1760 bytes (static, BSS)                      */
 /* -------------------------------------------------------------------------- */
-void ST7735_RenderFrame(uint8_t waveY[], unsigned int vol_div_mv, unsigned int time_div_us) {
+void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_us, uint8_t selMode) {
   /* ---- 1. Precompute oscilloscope vertical spans ---- */
   static uint8_t yLo[TFT_WIDTH];
   static uint8_t yHi[TFT_WIDTH];
@@ -388,8 +388,10 @@ void ST7735_RenderFrame(uint8_t waveY[], unsigned int vol_div_mv, unsigned int t
       /* Label strip (overrides everything) */
       if (inLabel) {
         c = COLOR_LABEL_BG;
-        if (lrow >= 0 && lrow < 10 && labelBit[lrow][x])
-          c = COLOR_LABEL;
+        if (lrow >= 0 && lrow < 10 && labelBit[lrow][x]) {
+          if (x < 80) c = (selMode == 0) ? COLOR_LABEL : COLOR_GRID_V;
+          else        c = (selMode == 1) ? COLOR_LABEL : COLOR_GRID_V;
+        }
       }
 
       buf[x * 2] = c >> 8;

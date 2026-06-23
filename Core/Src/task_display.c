@@ -19,9 +19,9 @@ void BuildWaveform(DispData_t *pDisp) {
     int idx = (trig + x) % SAMPLE_SIZE;
     float adc = (float)pDisp->wave[idx];
 
-    /* Centre at y=64 (midpoint of 128-px screen = 0 V reference)
+    /* 0V reference at y=112 (bottom grid line)
      * scale = how many ADC counts per 16 pixels */
-    int y = 64 - (int)((adc - 2048.0f) / scale);
+    int y = 112 - (int)(adc / scale);
 
     if (y < 0)
       y = 0;
@@ -43,7 +43,7 @@ void StartTaskDisplay(void const *argument) {
     if (v > 16) v = 32 - v;
     waveY[i] = (uint8_t)(48 + v); /* Range: 48..64 */
   }
-  ST7735_RenderFrame(waveY, 1000, 1000);
+  ST7735_RenderFrame(waveY, 1000, 1000, 0);
 
   while (1) {
     evt = osMailGet(myQueue02Handle, osWaitForever);
@@ -56,8 +56,8 @@ void StartTaskDisplay(void const *argument) {
 
       /* Render to TFT */
       unsigned int vol_div_mv = (unsigned int)(gConfig.vdivScale * 1000.0f);
-      unsigned int time_div_us = (unsigned int)(gConfig.timeDivMs * 1000);
-      ST7735_RenderFrame(waveY, vol_div_mv, time_div_us);
+      unsigned int time_div_us = (unsigned int)(gConfig.timeDivUs);
+      ST7735_RenderFrame(waveY, vol_div_mv, time_div_us, gConfig.selMode);
 
       osMailFree(myQueue02Handle, pDisp);
     }
