@@ -10,18 +10,21 @@ void BuildWaveform(DispData_t *pDisp) {
   unsigned int vol_div_mv = (unsigned int)(gConfig.vdivScale * 1000.0f);
 
   /* Calculate voltage scale (Y axis) */
-  /* scale = (vol_div_mv * 4096) / (16 * ADC_VREF_MV) */
-  const float scale = ((float)vol_div_mv * 4096.0f) / (16.0f * (float)ADC_VREF_MV);
+    /* Hardware frontend attenuates and biases to 1.65V (2048 counts)
+     * scale = (vol_div_mv * 8.0f) / 1000.0f */
+    const float scale = ((float)vol_div_mv * 8.0f) / 1000.0f;
 
-  int trig = (int)pDisp->trigIdx;
+    int trig = (int)pDisp->trigIdx;
+    trig -= 40; /* Shift wave to the right by 40 pixels so trigger edge is visible */
+    if (trig < 0) trig += SAMPLE_SIZE;
 
-  for (int x = 0; x < 160; x++) {
-    int idx = (trig + x) % SAMPLE_SIZE;
-    float adc = (float)pDisp->wave[idx];
+    /* Process waveform points */
+    for (int x = 0; x < 160; x++) {
+      int idx = (trig + x) % SAMPLE_SIZE;
+      float adc = (float)pDisp->wave[idx];
 
-    /* 0V reference at y=112 (bottom grid line)
-     * scale = how many ADC counts per 16 pixels */
-    int y = 112 - (int)(adc / scale);
+      /* Centre at y=64 (midpoint of 128-px screen = 0 V reference) */
+      int y = 64 - (int)((adc - 2048.0f) / scale);
 
     if (y < 0)
       y = 0;
