@@ -13,6 +13,9 @@
  * Half-complete ISR -> first 160, Full-complete ISR -> second 160 */
 extern uint32_t  ADC_VAL[ADC_BUFFER_SIZE * 2];
 
+/* The final unpacked array, just like original task_Quyet code */
+extern uint16_t  ADC_VAL_FINAL[SAMPLE_SIZE];
+
 /* Flag to indicate which half of the buffer is ready (0 = first half, 1 = second half) */
 extern volatile uint8_t g_adc_half_flag;
 

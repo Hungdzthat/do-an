@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define SAMPLE_SIZE  320
+#define SAMPLE_SIZE  160
 
 typedef enum {
     SEL_VDIV    = 0,

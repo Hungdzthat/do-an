@@ -16,14 +16,8 @@ void StartTaskADC(void const *argument) {
      * when downstream tasks are busy. If queue is full, drop this sample. */
     pMsg = (ADCData_t *)osMailAlloc(myQueue01Handle, 5);
     if (pMsg != NULL) {
-      /* Determine offset of completed DMA half */
-      uint32_t offset = (g_adc_half_flag == 0) ? 0 : ADC_BUFFER_SIZE;
-
-      /* Unpack dual-mode ADC data into queue payload */
-      for (uint16_t i = 0; i < ADC_BUFFER_SIZE; i++) {
-        uint32_t raw = ADC_VAL[offset + i];
-        pMsg->data[2 * i]     = (uint16_t)(raw & 0xFFFFu);
-        pMsg->data[2 * i + 1] = (uint16_t)((raw >> 16) & 0xFFFFu);
+      for (uint16_t i = 0; i < SAMPLE_SIZE; i++) {
+        pMsg->data[i] = ADC_VAL_FINAL[i];
       }
 
       pMsg->time = osKernelSysTick();

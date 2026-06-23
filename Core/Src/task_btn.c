@@ -1,5 +1,8 @@
 #include "task_btn.h"
 #include "osc_rtos.h"
+#include "Button_signal.h"
+
+extern TIM_HandleTypeDef htim3;
 
 /* Default config at startup */
 OscConfig_t gConfig = {
@@ -74,6 +77,7 @@ void Btn_ApplyPlus(OscConfig_t *config) {
         if (config->vdivScale > 10.0f) config->vdivScale = 10.0f;
     } else {
         if (config->timeDivMs < 100) config->timeDivMs += 5;
+        __HAL_TIM_SET_AUTORELOAD(&htim3, 100 * config->timeDivMs - 1);
     }
 }
 
@@ -83,5 +87,6 @@ void Btn_ApplyMinus(OscConfig_t *config) {
         if (config->vdivScale < 0.1f) config->vdivScale = 0.1f;
     } else {
         if (config->timeDivMs > 1) config->timeDivMs -= 1;
+        __HAL_TIM_SET_AUTORELOAD(&htim3, 100 * config->timeDivMs - 1);
     }
 }

@@ -7,6 +7,7 @@ extern ADC_HandleTypeDef hadc2;
 extern TIM_HandleTypeDef htim3;
 
 uint32_t ADC_VAL[ADC_BUFFER_SIZE * 2];
+uint16_t ADC_VAL_FINAL[SAMPLE_SIZE];
 volatile uint8_t g_adc_half_flag = 0;
 
 void Analog_Signal_Init(void) {
@@ -24,6 +25,13 @@ void Analog_Signal_Init(void) {
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
   if (hadc->Instance == ADC1) {
     g_adc_half_flag = 0;
+
+    /* Unpack first half of ADC_VAL into ADC_VAL_FINAL */
+    for(int i = 0; i < ADC_BUFFER_SIZE; i++){
+      ADC_VAL_FINAL[2*i] = (uint16_t)(ADC_VAL[i] & 0xFFFFu);
+      ADC_VAL_FINAL[2*i + 1] = (uint16_t)((ADC_VAL[i] >> 16) & 0xFFFFu);
+    }
+
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     xSemaphoreGiveFromISR(mySem01Handle, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
@@ -34,6 +42,13 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
   if (hadc->Instance == ADC1) {
     g_adc_half_flag = 1;
+
+    /* Unpack second half of ADC_VAL into ADC_VAL_FINAL */
+    for(int i = 0; i < ADC_BUFFER_SIZE; i++){
+      ADC_VAL_FINAL[2*i] = (uint16_t)(ADC_VAL[ADC_BUFFER_SIZE + i] & 0xFFFFu);
+      ADC_VAL_FINAL[2*i + 1] = (uint16_t)((ADC_VAL[ADC_BUFFER_SIZE + i] >> 16) & 0xFFFFu);
+    }
+
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     xSemaphoreGiveFromISR(mySem01Handle, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);

@@ -8,34 +8,16 @@ uint8_t waveY[160];
 
 void BuildWaveform(DispData_t *pDisp) {
   unsigned int vol_div_mv = (unsigned int)(gConfig.vdivScale * 1000.0f);
-  unsigned int time_div_us = (unsigned int)(gConfig.timeDivMs * 1000);
 
+  /* Calculate voltage scale (Y axis) */
+  /* scale = (vol_div_mv * 4096) / (16 * ADC_VREF_MV) */
   const float scale = ((float)vol_div_mv * 4096.0f) / (16.0f * (float)ADC_VREF_MV);
-  const float step  = ((float)time_div_us * (float)ADC_FS_HZ) / (16.0f * 1000000.0f);
 
   int trig = (int)pDisp->trigIdx;
 
-  /* Ensure step is at least 1 pixel per sample to avoid infinite loops */
-  float actual_step = step;
-  if (actual_step < 0.1f) actual_step = 0.1f;
-
   for (int x = 0; x < 160; x++) {
-    float pos = (float)trig + (float)x * actual_step;
-
-    /* Wrap around the circular buffer */
-    while (pos >= SAMPLE_SIZE)
-      pos -= SAMPLE_SIZE;
-    while (pos < 0)
-      pos += SAMPLE_SIZE;
-
-    int i0 = (int)pos;
-    if (i0 >= SAMPLE_SIZE) i0 = SAMPLE_SIZE - 1;
-    int i1 = (i0 + 1) % SAMPLE_SIZE;
-
-    float frac = pos - (float)i0;
-
-    /* Linear interpolation between adjacent samples */
-    float adc = pDisp->wave[i0] * (1.0f - frac) + pDisp->wave[i1] * frac;
+    int idx = (trig + x) % SAMPLE_SIZE;
+    float adc = (float)pDisp->wave[idx];
 
     /* Centre at y=64 (midpoint of 128-px screen = 0 V reference)
      * scale = how many ADC counts per 16 pixels */
