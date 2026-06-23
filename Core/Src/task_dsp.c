@@ -12,7 +12,8 @@ float dsp_calcVpp(const uint16_t *buf) {
         if (buf[i] > vmax) vmax = buf[i];
         if (buf[i] < vmin) vmin = buf[i];
     }
-    return (float)(vmax - vmin) * (float)ADC_VREF_MV / (4096.0f * 1000.0f);
+    /* Hardware attenuator: 128 ADC counts = 1V (1000mV) */
+    return (float)(vmax - vmin) / 128.0f;
 }
 
 float dsp_calcVrms(const uint16_t *buf) {
@@ -34,7 +35,8 @@ float dsp_calcVrms(const uint16_t *buf) {
         for (int j = 0; j < 10; j++)
             rms_counts = 0.5f * (rms_counts + x / rms_counts);
     }
-    return rms_counts * (float)ADC_VREF_MV / (4096.0f * 1000.0f);
+    /* Hardware attenuator: 128 ADC counts = 1V */
+    return rms_counts / 128.0f;
 }
 
 float dsp_calcFreq(const uint16_t *buf) {
