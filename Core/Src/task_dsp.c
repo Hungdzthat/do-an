@@ -54,16 +54,26 @@ float dsp_calcFreq(const uint16_t *buf) {
         if (buf[i] > vmax) vmax = buf[i];
         if (buf[i] < vmin) vmin = buf[i];
     }
+    /* Require at least ~0.8V VPP to calculate frequency reliably */
+    if ((vmax - vmin) < 50) return 0.0f;
+
     uint16_t mid = (vmax + vmin) / 2;
+    uint16_t hyst = (vmax - vmin) / 8;
+    if (hyst < 5) hyst = 5;
 
     int crossings = 0;
     int first_cross = -1;
     int last_cross = -1;
+    int state = (buf[0] > mid) ? 1 : 0;
+
     for (int i = 1; i < SAMPLE_SIZE; i++) {
-        if (buf[i - 1] < mid && buf[i] >= mid) {
+        if (state == 0 && buf[i] > (mid + hyst)) {
+            state = 1;
             if (first_cross < 0) first_cross = i;
             last_cross = i;
             crossings++;
+        } else if (state == 1 && buf[i] < (mid - hyst)) {
+            state = 0;
         }
     }
 
@@ -82,18 +92,25 @@ float dsp_calcDuty(const uint16_t *buf) {
         if (buf[i] < vmin) vmin = buf[i];
     }
     /* If amplitude is very small, it's not a valid pulse */
-    if ((vmax - vmin) < 30) return 0.0f;
+    if ((vmax - vmin) < 50) return 0.0f;
 
     uint16_t mid = (vmax + vmin) / 2;
+    uint16_t hyst = (vmax - vmin) / 8;
+    if (hyst < 5) hyst = 5;
+
     int crossings = 0;
     int first_cross = -1;
     int last_cross = -1;
+    int state = (buf[0] > mid) ? 1 : 0;
 
     for (int i = 1; i < SAMPLE_SIZE; i++) {
-        if (buf[i - 1] < mid && buf[i] >= mid) {
+        if (state == 0 && buf[i] > (mid + hyst)) {
+            state = 1;
             if (first_cross < 0) first_cross = i;
             last_cross = i;
             crossings++;
+        } else if (state == 1 && buf[i] < (mid - hyst)) {
+            state = 0;
         }
     }
 
