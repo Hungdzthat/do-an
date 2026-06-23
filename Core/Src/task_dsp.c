@@ -12,8 +12,8 @@ float dsp_calcVpp(const uint16_t *buf) {
         if (buf[i] > vmax) vmax = buf[i];
         if (buf[i] < vmin) vmin = buf[i];
     }
-    /* Hardware attenuator: 128 ADC counts = 1V (1000mV) */
-    return (float)(vmax - vmin) / 128.0f;
+    /* Hardware calibrated: 64 ADC counts = 1V */
+    return (float)(vmax - vmin) / 64.0f;
 }
 
 float dsp_calcVrms(const uint16_t *buf) {
@@ -35,8 +35,8 @@ float dsp_calcVrms(const uint16_t *buf) {
         for (int j = 0; j < 10; j++)
             rms_counts = 0.5f * (rms_counts + x / rms_counts);
     }
-    /* Hardware attenuator: 128 ADC counts = 1V */
-    return rms_counts / 128.0f;
+    /* Hardware calibrated: 64 ADC counts = 1V */
+    return rms_counts / 64.0f;
 }
 
 float dsp_calcVdc(const uint16_t *buf) {
@@ -44,8 +44,8 @@ float dsp_calcVdc(const uint16_t *buf) {
     for (int i = 0; i < SAMPLE_SIZE; i++)
         sum += (float)buf[i];
     float mean = sum / (float)SAMPLE_SIZE;
-    /* 2048 is 0V reference. 128 counts = 1V. */
-    return (mean - 2048.0f) / 128.0f;
+    /* Hardware calibrated: 2022 is 0V reference. 64 counts = 1V. */
+    return (mean - 2022.0f) / 64.0f;
 }
 
 float dsp_calcFreq(const uint16_t *buf) {

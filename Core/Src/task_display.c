@@ -10,9 +10,11 @@ void BuildWaveform(DispData_t *pDisp) {
   unsigned int vol_div_mv = (unsigned int)(gConfig.vdivMv);
 
   /* Calculate voltage scale (Y axis) */
-    /* Hardware frontend attenuates and biases to 1.65V (2048 counts)
-     * scale = (vol_div_mv * 8.0f) / 1000.0f */
-    const float scale = ((float)vol_div_mv * 8.0f) / 1000.0f;
+    /* Hardware calibrated: 64 counts = 1V. Screen: 16 pixels = 1 division. 
+       If setting is vol_div_mv (e.g. 1000mV = 1V), then 1 division should span 1V.
+       Counts per division = (vol_div_mv / 1000) * 64. 
+       Scale (counts per pixel) = Counts per division / 16 = vol_div_mv * 4 / 1000. */
+    const float scale = ((float)vol_div_mv * 4.0f) / 1000.0f;
 
     int trig = (int)pDisp->trigIdx;
     trig -= 40; /* Shift wave to the right by 40 pixels so trigger edge is visible */
@@ -23,8 +25,9 @@ void BuildWaveform(DispData_t *pDisp) {
       int idx = (trig + x) % SAMPLE_SIZE;
       float adc = (float)pDisp->wave[idx];
 
-      /* Centre at y=64 (midpoint of 128-px screen = 0 V reference) */
-      int y = 64 - (int)((adc - 2048.0f) / scale);
+      /* Centre at y=64 (midpoint of 128-px screen = 0 V reference) 
+       * Hardware calibrated 0V reference is 2022. */
+      int y = 64 - (int)((adc - 2022.0f) / scale);
 
     if (y < 0)
       y = 0;
