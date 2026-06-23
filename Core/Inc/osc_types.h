@@ -27,6 +27,7 @@ typedef struct {
     float    vpp;
     float    vrms;
     float    freq;
+    float    vdc;
     uint16_t trigIdx;   /* was uint8_t - overflows for index > 255 */
 } DispData_t;
 

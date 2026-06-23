@@ -39,6 +39,15 @@ float dsp_calcVrms(const uint16_t *buf) {
     return rms_counts / 128.0f;
 }
 
+float dsp_calcVdc(const uint16_t *buf) {
+    float sum = 0;
+    for (int i = 0; i < SAMPLE_SIZE; i++)
+        sum += (float)buf[i];
+    float mean = sum / (float)SAMPLE_SIZE;
+    /* 2048 is 0V reference. 128 counts = 1V. */
+    return (mean - 2048.0f) / 128.0f;
+}
+
 float dsp_calcFreq(const uint16_t *buf) {
     uint16_t vmax = 0, vmin = 4095;
     for (int i = 0; i < SAMPLE_SIZE; i++) {
@@ -111,6 +120,7 @@ void StartTaskDSP(void const *argument)
                     memcpy(pOut->wave, pIn->data, SAMPLE_SIZE * sizeof(uint16_t));
                     pOut->vpp     = dsp_calcVpp(pIn->data);
                     pOut->vrms    = dsp_calcVrms(pIn->data);
+                    pOut->vdc     = dsp_calcVdc(pIn->data);
                     pOut->freq    = dsp_calcFreq(pIn->data);
                     pOut->trigIdx = dsp_findTrig(pIn->data);
 

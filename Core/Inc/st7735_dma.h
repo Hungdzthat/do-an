@@ -40,6 +40,6 @@ void ST7735_Init(void);
 void ST7735_SetWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
 void ST7735_DrawPixel(int16_t x, int16_t y, uint16_t color);
 void ST7735_DrawLine(int x0, int y0, int x1, int y1, uint16_t color);
-void ST7735_RenderFrame(uint8_t *waveY, uint32_t vol_div_mv, uint32_t time_div_us, uint8_t selMode, uint8_t showInfo, float vrms, float freq, float vpp);
+void ST7735_RenderFrame(uint8_t *waveY, uint32_t vol_div_mv, uint32_t time_div_us, uint8_t selMode, uint8_t showInfo, float vrms, float freq, float vpp, float vdc);
 
 #endif

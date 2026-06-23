@@ -268,7 +268,7 @@ static inline int IsTextPixel(int x, int y, int startX, int startY, const char *
     uint16_t bits = Font_7x10.data[(c - ' ') * 10 + (y - startY)];
     return (bits >> (15 - charPixelX)) & 1;
 }
-void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_us, uint8_t selMode, uint8_t showInfo, float vrms, float freq, float vpp) {
+void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_us, uint8_t selMode, uint8_t showInfo, float vrms, float freq, float vpp, float vdc) {
   /* ---- 1. Precompute oscilloscope vertical spans ---- */
   static uint8_t yLo[TFT_WIDTH];
   static uint8_t yHi[TFT_WIDTH];
@@ -288,9 +288,11 @@ void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_
   /* ---- 2. Prepare text strings ---- */
   char lblFreq[16] = {0};
   char lblVpp[16] = {0};
+  char lblVdc[16] = {0};
   if (showInfo) {
     snprintf(lblFreq, sizeof(lblFreq), "F:%uHz", (unsigned int)freq);
-    snprintf(lblVpp, sizeof(lblVpp), "V:%.2fV", vpp);
+    snprintf(lblVpp, sizeof(lblVpp), "Vpp:%.2fV", vpp);
+    snprintf(lblVdc, sizeof(lblVdc), "Vdc:%.2fV", vdc);
   }
 
   char lblVol[16] = {0};
@@ -360,9 +362,10 @@ void ST7735_RenderFrame(uint8_t waveY[], uint32_t vol_div_mv, uint32_t time_div_
         c = COLOR_WAVE;
 
       /* Info Box - overrides waveform and grid in top right corner */
-      if (showInfo && y < 24 && x >= (TFT_WIDTH - 66)) {
-        if (IsTextPixel(x, y, TFT_WIDTH - 64, 2, lblFreq)) c = 0xFFE0u; /* Yellow text */
-        else if (IsTextPixel(x, y, TFT_WIDTH - 64, 12, lblVpp)) c = 0xFFE0u;
+      if (showInfo && y < 34 && x >= (TFT_WIDTH - 76)) {
+        if (IsTextPixel(x, y, TFT_WIDTH - 74, 2, lblFreq)) c = 0xFFE0u; /* Yellow text */
+        else if (IsTextPixel(x, y, TFT_WIDTH - 74, 12, lblVpp)) c = 0xFFE0u;
+        else if (IsTextPixel(x, y, TFT_WIDTH - 74, 22, lblVdc)) c = 0xFFE0u;
         else c = 0x0000u; /* Black background */
       } else if (inLabel) {
         /* Label strip (overrides everything) */
