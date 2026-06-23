@@ -6,21 +6,21 @@
 #include "osc_types.h"
 
 /* Button GPIO mapping (matches MX_GPIO_Init in main.c)
- * Active-low with internal pull-up */
+ * All buttons on GPIOA, active-low with internal pull-up */
 #define BTN_SEL_PIN     GPIO_PIN_8
 #define BTN_SEL_PORT    GPIOA
 
-#define BTN_PLUS_PIN    GPIO_PIN_12
-#define BTN_PLUS_PORT   GPIOB
+#define BTN_PLUS_PIN    GPIO_PIN_9
+#define BTN_PLUS_PORT   GPIOA
 
-#define BTN_MINUS_PIN   GPIO_PIN_13
-#define BTN_MINUS_PORT  GPIOB
+#define BTN_MINUS_PIN   GPIO_PIN_10
+#define BTN_MINUS_PORT  GPIOA
 
-#define BTN_INFO_PIN    GPIO_PIN_14
-#define BTN_INFO_PORT   GPIOB
+#define BTN_INFO_PIN    GPIO_PIN_11
+#define BTN_INFO_PORT   GPIOA
 
-#define BTN_HOLD_PIN    GPIO_PIN_15
-#define BTN_HOLD_PORT   GPIOB
+#define BTN_HOLD_PIN    GPIO_PIN_12
+#define BTN_HOLD_PORT   GPIOA
 
 /* Global config - defined in task_btn.c */
 extern OscConfig_t gConfig;
