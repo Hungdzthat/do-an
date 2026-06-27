@@ -81,7 +81,13 @@ float dsp_calcFreq(const uint16_t *buf) {
         return 0.0f;
 
     float period_samples = (float)(last_cross - first_cross) / (float)(crossings - 1);
-    float sample_rate_hz = 16.0f * 1000000.0f / (float)gConfig.timeDivUs;
+    
+    /* CRITICAL: Read gConfig.timeDivUs with Mutex protection */
+    osMutexWait(gConfigMutexHandle, osWaitForever);
+    uint32_t timeDivUs = gConfig.timeDivUs;
+    osMutexRelease(gConfigMutexHandle);
+    
+    float sample_rate_hz = 16.0f * 1000000.0f / (float)timeDivUs;
     return sample_rate_hz / period_samples;
 }
 

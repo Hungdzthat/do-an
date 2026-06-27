@@ -7,7 +7,10 @@
 uint8_t waveY[160];
 
 void BuildWaveform(DispData_t *pDisp) {
+  /* CRITICAL: Read gConfig.vdivMv with Mutex protection */
+  osMutexWait(gConfigMutexHandle, osWaitForever);
   unsigned int vol_div_mv = (unsigned int)(gConfig.vdivMv);
+  osMutexRelease(gConfigMutexHandle);
 
   /* Calculate voltage scale (Y axis) */
     /* Hardware calibrated: 64 counts = 1V. Screen: 16 pixels = 1 division. 
@@ -60,10 +63,16 @@ void StartTaskDisplay(void const *argument) {
       /* Build pixel array from ADC data */
       BuildWaveform(pDisp);
 
-      /* Render to TFT */
+      /* CRITICAL: Read all gConfig fields with Mutex protection */
+      osMutexWait(gConfigMutexHandle, osWaitForever);
       unsigned int vol_div_mv = (unsigned int)(gConfig.vdivMv);
       unsigned int time_div_us = (unsigned int)(gConfig.timeDivUs);
-      ST7735_RenderFrame(waveY, vol_div_mv, time_div_us, gConfig.selMode, gConfig.showInfo, pDisp->vrms, pDisp->freq, pDisp->vpp, pDisp->vdc, pDisp->duty);
+      uint8_t selMode = gConfig.selMode;
+      uint8_t showInfo = gConfig.showInfo;
+      osMutexRelease(gConfigMutexHandle);
+
+      /* Render to TFT */
+      ST7735_RenderFrame(waveY, vol_div_mv, time_div_us, selMode, showInfo, pDisp->vrms, pDisp->freq, pDisp->vpp, pDisp->vdc, pDisp->duty);
 
       osMailFree(myQueue02Handle, pDisp);
     }

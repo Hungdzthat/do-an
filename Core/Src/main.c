@@ -180,7 +180,7 @@ int main(void)
   myTask03Handle = osThreadCreate(osThread(myTask03), NULL);
 
   /* definition and creation of myTask04 */
-  osThreadDef(myTask04, StartTaskBtn, osPriorityHigh, 0, 256);
+  osThreadDef(myTask04, StartTaskBtn, osPriorityLow, 0, 256);
   myTask04Handle = osThreadCreate(osThread(myTask04), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */

@@ -78,7 +78,11 @@ void Btn_ApplyPlus(OscConfig_t *config) {
         /* TIM3_CLK = 56MHz. ADC takes 2 samples per TIM3 TRGO.
            Sample Rate = 16 * 10^6 / timeDivUs. f_TIM3 = Sample Rate / 2.
            ARR = 56M / f_TIM3 - 1 = 7 * timeDivUs - 1 */
+        /* Safely update ARR: stop timer, change ARR, restart */
+        HAL_TIM_Base_Stop(&htim3);
         __HAL_TIM_SET_AUTORELOAD(&htim3, (7 * config->timeDivUs) - 1);
+        htim3.Instance->CNT = 0;  /* Reset counter to start fresh */
+        HAL_TIM_Base_Start(&htim3);
     }
 }
 
@@ -87,6 +91,10 @@ void Btn_ApplyMinus(OscConfig_t *config) {
         if (config->vdivMv > 50) config->vdivMv -= 50;
     } else {
         if (config->timeDivUs > 50) config->timeDivUs -= 50;
+        /* Safely update ARR: stop timer, change ARR, restart */
+        HAL_TIM_Base_Stop(&htim3);
         __HAL_TIM_SET_AUTORELOAD(&htim3, (7 * config->timeDivUs) - 1);
+        htim3.Instance->CNT = 0;  /* Reset counter to start fresh */
+        HAL_TIM_Base_Start(&htim3);
     }
 }
