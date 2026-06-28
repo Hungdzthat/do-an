@@ -6,98 +6,51 @@
 
 /* ---- DSP helper functions ---- */
 
+/* Simple bubble sort helper - extract to avoid duplication */
+static void sort_array(uint16_t *arr, int size) {
+    for (int i = 0; i < size - 1; i++)
+        for (int j = 0; j < size - i - 1; j++)
+            if (arr[j] > arr[j + 1]) {
+                uint16_t temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+}
+
 float dsp_calcVpp(const uint16_t *buf) {
-    /* ROBUST Vpp calculation: ignore outliers using percentile method
-     * Instead of using absolute min/max (vulnerable to spikes),
-     * use 10th-90th percentile for noise immunity */
-    
     uint16_t sorted[SAMPLE_SIZE];
     for (int i = 0; i < SAMPLE_SIZE; i++) sorted[i] = buf[i];
-    
-    /* Simple bubble sort (160 elements is small) */
-    for (int i = 0; i < SAMPLE_SIZE - 1; i++) {
-        for (int j = 0; j < SAMPLE_SIZE - i - 1; j++) {
-            if (sorted[j] > sorted[j + 1]) {
-                uint16_t temp = sorted[j];
-                sorted[j] = sorted[j + 1];
-                sorted[j + 1] = temp;
-            }
-        }
-    }
-    
-    /* Get 10th and 90th percentile (ignore top/bottom 10% outliers) */
-    uint16_t vmin = sorted[SAMPLE_SIZE / 10];      /* 10th percentile */
-    uint16_t vmax = sorted[SAMPLE_SIZE * 9 / 10];  /* 90th percentile */
-    
-    /* Hardware calibrated: 64 ADC counts = 1V */
-    return (float)(vmax - vmin) / 64.0f;
+    sort_array(sorted, SAMPLE_SIZE);
+    return (float)(sorted[SAMPLE_SIZE * 9 / 10] - sorted[SAMPLE_SIZE / 10]) / 64.0f;
 }
 
 float dsp_calcVrms(const uint16_t *buf) {
-    /* ROBUST Vrms calculation: use percentile range for calculation
-     * Calculate RMS only within 10th-90th percentile to reject outliers */
-    
     uint16_t sorted[SAMPLE_SIZE];
     for (int i = 0; i < SAMPLE_SIZE; i++) sorted[i] = buf[i];
-    
-    /* Simple bubble sort */
-    for (int i = 0; i < SAMPLE_SIZE - 1; i++) {
-        for (int j = 0; j < SAMPLE_SIZE - i - 1; j++) {
-            if (sorted[j] > sorted[j + 1]) {
-                uint16_t temp = sorted[j];
-                sorted[j] = sorted[j + 1];
-                sorted[j + 1] = temp;
-            }
-        }
-    }
-    
-    /* Get 10th, 50th (median), 90th percentiles */
-    uint16_t vmin = sorted[SAMPLE_SIZE / 10];
+    sort_array(sorted, SAMPLE_SIZE);
     uint16_t median = sorted[SAMPLE_SIZE / 2];
     
-    /* Calculate RMS relative to median (center) */
     float sum_sq = 0;
     for (int i = 0; i < SAMPLE_SIZE; i++) {
         float diff = (float)buf[i] - (float)median;
         sum_sq += diff * diff;
     }
     
-    float rms_counts = 0;
+    float rms = 0;
     if (sum_sq > 0) {
-        /* Newton's method sqrt */
         float x = sum_sq / (float)SAMPLE_SIZE;
-        rms_counts = x;
+        rms = x;
         for (int j = 0; j < 10; j++)
-            rms_counts = 0.5f * (rms_counts + x / rms_counts);
+            rms = 0.5f * (rms + x / rms);
     }
-    
-    /* Hardware calibrated: 64 ADC counts = 1V */
-    return rms_counts / 64.0f;
+    return rms / 64.0f;
 }
 
 float dsp_calcVdc(const uint16_t *buf) {
-    /* ROBUST Vdc calculation: use median instead of mean
-     * Median is immune to outliers, mean can shift due to spikes */
-    
     uint16_t sorted[SAMPLE_SIZE];
     for (int i = 0; i < SAMPLE_SIZE; i++) sorted[i] = buf[i];
-    
-    /* Simple bubble sort */
-    for (int i = 0; i < SAMPLE_SIZE - 1; i++) {
-        for (int j = 0; j < SAMPLE_SIZE - i - 1; j++) {
-            if (sorted[j] > sorted[j + 1]) {
-                uint16_t temp = sorted[j];
-                sorted[j] = sorted[j + 1];
-                sorted[j + 1] = temp;
-            }
-        }
-    }
-    
-    /* Get median (50th percentile) */
-    uint16_t median = sorted[SAMPLE_SIZE / 2];
-    
-    /* Hardware calibrated: 2022 is 0V reference. 64 counts = 1V. */
-    return (median - 2022.0f) / 64.0f;
+    sort_array(sorted, SAMPLE_SIZE);
+    return (float)(sorted[SAMPLE_SIZE / 2] - 2022.0f) / 64.0f;
 }
 
 float dsp_calcFreq(const uint16_t *buf) {
