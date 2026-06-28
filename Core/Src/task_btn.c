@@ -3,7 +3,6 @@
 
 extern TIM_HandleTypeDef htim3;
 
-/* Default config at startup */
 OscConfig_t gConfig = {
     .vdivMv    = 1000,
     .timeDivUs = 500,
@@ -12,89 +11,65 @@ OscConfig_t gConfig = {
     .holdRun   = OSC_RUN
 };
 
+static void update_tim3_arr(uint32_t timeDivUs) {
+    HAL_TIM_Base_Stop(&htim3);
+    __HAL_TIM_SET_AUTORELOAD(&htim3, (7 * timeDivUs) - 1);
+    htim3.Instance->CNT = 0;
+    HAL_TIM_Base_Start(&htim3);
+}
+
 void StartTaskBtn(void const *argument) {
   static uint8_t prevSel = 0, prevPlus = 0, prevMinus = 0, prevInfo = 0, prevHold = 0;
 
   for (;;) {
-    /* Read all button states BEFORE taking mutex
-     * -> minimize mutex hold time, avoid blocking other tasks */
-    uint8_t curSel   = Btn_IsSelPressed();
-    uint8_t curPlus  = Btn_IsPlusPressed();
-    uint8_t curMinus = Btn_IsMinusPressed();
-    uint8_t curInfo  = Btn_IsInfoPressed();
-    uint8_t curHold  = Btn_IsHoldPressed();
+    uint8_t curSel = Btn_IsSelPressed(), curPlus = Btn_IsPlusPressed(),
+            curMinus = Btn_IsMinusPressed(), curInfo = Btn_IsInfoPressed(),
+            curHold = Btn_IsHoldPressed();
 
-    uint8_t trigSel   = (curSel && !prevSel);
-    uint8_t trigPlus  = (curPlus && !prevPlus);
-    uint8_t trigMinus = (curMinus && !prevMinus);
-    uint8_t trigInfo  = (curInfo && !prevInfo);
-    uint8_t trigHold  = (curHold && !prevHold);
+    uint8_t trigSel = curSel && !prevSel, trigPlus = curPlus && !prevPlus,
+            trigMinus = curMinus && !prevMinus, trigInfo = curInfo && !prevInfo,
+            trigHold = curHold && !prevHold;
 
-    prevSel   = curSel;
-    prevPlus  = curPlus;
-    prevMinus = curMinus;
-    prevInfo  = curInfo;
-    prevHold  = curHold;
+    prevSel = curSel; prevPlus = curPlus; prevMinus = curMinus;
+    prevInfo = curInfo; prevHold = curHold;
 
     if (trigSel || trigPlus || trigMinus || trigInfo || trigHold) {
       osMutexWait(gConfigMutexHandle, osWaitForever);
-
-      if (trigSel)
-        gConfig.selMode = Btn_GetNextSelMode(gConfig.selMode);
-      if (trigPlus)
-        Btn_ApplyPlus(&gConfig);
-      if (trigMinus)
-        Btn_ApplyMinus(&gConfig);
-      if (trigInfo)
-        gConfig.showInfo = !gConfig.showInfo;
-      if (trigHold)
-        gConfig.holdRun = (gConfig.holdRun == OSC_RUN) ? OSC_HOLD : OSC_RUN;
-
+      if (trigSel) gConfig.selMode = Btn_GetNextSelMode(gConfig.selMode);
+      if (trigPlus) Btn_ApplyPlus(&gConfig);
+      if (trigMinus) Btn_ApplyMinus(&gConfig);
+      if (trigInfo) gConfig.showInfo = !gConfig.showInfo;
+      if (trigHold) gConfig.holdRun = (gConfig.holdRun == OSC_RUN) ? OSC_HOLD : OSC_RUN;
       osMutexRelease(gConfigMutexHandle);
     }
-
-    osDelay(50); /* Debounce + yield CPU */
+    osDelay(50);
   }
 }
 
-/* --- Button GPIO read functions --- */
-/* All buttons: GPIOA, active-low (pull-up configured in MX_GPIO_Init) */
 uint8_t Btn_IsSelPressed(void)   { return HAL_GPIO_ReadPin(BTN_SEL_PORT,   BTN_SEL_PIN)   == GPIO_PIN_RESET; }
 uint8_t Btn_IsPlusPressed(void)  { return HAL_GPIO_ReadPin(BTN_PLUS_PORT,  BTN_PLUS_PIN)  == GPIO_PIN_RESET; }
 uint8_t Btn_IsMinusPressed(void) { return HAL_GPIO_ReadPin(BTN_MINUS_PORT, BTN_MINUS_PIN) == GPIO_PIN_RESET; }
 uint8_t Btn_IsInfoPressed(void)  { return HAL_GPIO_ReadPin(BTN_INFO_PORT,  BTN_INFO_PIN)  == GPIO_PIN_RESET; }
 uint8_t Btn_IsHoldPressed(void)  { return HAL_GPIO_ReadPin(BTN_HOLD_PORT,  BTN_HOLD_PIN)  == GPIO_PIN_RESET; }
 
-SelMode_t Btn_GetNextSelMode(SelMode_t currentMode) {
-    if (currentMode == SEL_VDIV) return SEL_TIMEDIV;
-    return SEL_VDIV;
+SelMode_t Btn_GetNextSelMode(SelMode_t mode) {
+    return (mode == SEL_VDIV) ? SEL_TIMEDIV : SEL_VDIV;
 }
 
-void Btn_ApplyPlus(OscConfig_t *config) {
-    if (config->selMode == SEL_VDIV) {
-        if (config->vdivMv < 50000) config->vdivMv += 50;
+void Btn_ApplyPlus(OscConfig_t *cfg) {
+    if (cfg->selMode == SEL_VDIV) {
+        if (cfg->vdivMv < 50000) cfg->vdivMv += 50;
     } else {
-        if (config->timeDivUs < 100000) config->timeDivUs += 50;
-        /* TIM3_CLK = 56MHz. ADC takes 2 samples per TIM3 TRGO.
-           Sample Rate = 16 * 10^6 / timeDivUs. f_TIM3 = Sample Rate / 2.
-           ARR = 56M / f_TIM3 - 1 = 7 * timeDivUs - 1 */
-        /* Safely update ARR: stop timer, change ARR, restart */
-        HAL_TIM_Base_Stop(&htim3);
-        __HAL_TIM_SET_AUTORELOAD(&htim3, (7 * config->timeDivUs) - 1);
-        htim3.Instance->CNT = 0;  /* Reset counter to start fresh */
-        HAL_TIM_Base_Start(&htim3);
+        if (cfg->timeDivUs < 100000) cfg->timeDivUs += 50;
+        update_tim3_arr(cfg->timeDivUs);
     }
 }
 
-void Btn_ApplyMinus(OscConfig_t *config) {
-    if (config->selMode == SEL_VDIV) {
-        if (config->vdivMv > 50) config->vdivMv -= 50;
+void Btn_ApplyMinus(OscConfig_t *cfg) {
+    if (cfg->selMode == SEL_VDIV) {
+        if (cfg->vdivMv > 50) cfg->vdivMv -= 50;
     } else {
-        if (config->timeDivUs > 50) config->timeDivUs -= 50;
-        /* Safely update ARR: stop timer, change ARR, restart */
-        HAL_TIM_Base_Stop(&htim3);
-        __HAL_TIM_SET_AUTORELOAD(&htim3, (7 * config->timeDivUs) - 1);
-        htim3.Instance->CNT = 0;  /* Reset counter to start fresh */
-        HAL_TIM_Base_Start(&htim3);
+        if (cfg->timeDivUs > 50) cfg->timeDivUs -= 50;
+        update_tim3_arr(cfg->timeDivUs);
     }
 }
