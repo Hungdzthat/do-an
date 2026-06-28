@@ -12,8 +12,8 @@ void BuildWaveform(DispData_t *pDisp) {
   osMutexRelease(gConfigMutexHandle);
 
   const float scale = ((float)vol_div_mv * 4.0f) / 1000.0f;
-  int trig = (int)pDisp->trigIdx - 40;
-  if (trig < 0) trig += SAMPLE_SIZE;
+  /* Start from trigger point for stable waveform display */
+  int trig = (int)pDisp->trigIdx;
 
   for (int x = 0; x < 160; x++) {
     float adc = (float)pDisp->wave[(trig + x) % SAMPLE_SIZE];

@@ -17,11 +17,33 @@ void Analog_Signal_Init(void) {
   HAL_TIM_Base_Start(&htim3);
 }
 
+/* Simple 3-point median filter for noise reduction */
+static uint16_t median_filter(uint16_t a, uint16_t b, uint16_t c) {
+  if (a > b) {
+    if (b > c) return b;  /* a > b > c */
+    if (a > c) return c;  /* a > c >= b */
+    return a;             /* c >= a > b */
+  } else {
+    if (a > c) return a;  /* b >= a > c */
+    if (b > c) return c;  /* b >= c >= a */
+    return b;             /* c >= b >= a */
+  }
+}
+
 static void unpack_adc_data(uint32_t offset) {
   for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
     uint32_t raw = ADC_VAL[offset + i];
-    ADC_VAL_FINAL[2 * i] = (uint16_t)(raw & 0xFFFFu);
-    ADC_VAL_FINAL[2 * i + 1] = (uint16_t)((raw >> 16) & 0xFFFFu);
+    uint16_t s0 = (uint16_t)(raw & 0xFFFFu);
+    uint16_t s1 = (uint16_t)((raw >> 16) & 0xFFFFu);
+    
+    /* Apply 3-point median filter for noise reduction (when previous sample exists) */
+    if (2 * i > 0) {
+      uint16_t prev = ADC_VAL_FINAL[2 * i - 1];
+      ADC_VAL_FINAL[2 * i] = median_filter(prev, s0, s1);
+    } else {
+      ADC_VAL_FINAL[2 * i] = s0;
+    }
+    ADC_VAL_FINAL[2 * i + 1] = s1;
   }
 }
 

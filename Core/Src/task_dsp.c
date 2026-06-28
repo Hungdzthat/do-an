@@ -21,7 +21,8 @@ float dsp_calcVpp(const uint16_t *buf) {
     uint16_t sorted[SAMPLE_SIZE];
     for (int i = 0; i < SAMPLE_SIZE; i++) sorted[i] = buf[i];
     sort_array(sorted, SAMPLE_SIZE);
-    return (float)(sorted[SAMPLE_SIZE * 9 / 10] - sorted[SAMPLE_SIZE / 10]) / 64.0f;
+    /* Use 15th and 85th percentile instead of 10th and 90th for better noise immunity */
+    return (float)(sorted[SAMPLE_SIZE * 85 / 100] - sorted[SAMPLE_SIZE * 15 / 100]) / 64.0f;
 }
 
 float dsp_calcVrms(const uint16_t *buf) {
@@ -30,15 +31,23 @@ float dsp_calcVrms(const uint16_t *buf) {
     sort_array(sorted, SAMPLE_SIZE);
     uint16_t median = sorted[SAMPLE_SIZE / 2];
     
+    /* Use trimmed data (15-85 percentile) to reduce outlier effects */
+    uint16_t lower = sorted[SAMPLE_SIZE * 15 / 100];
+    uint16_t upper = sorted[SAMPLE_SIZE * 85 / 100];
+    
     float sum_sq = 0;
+    int count = 0;
     for (int i = 0; i < SAMPLE_SIZE; i++) {
-        float diff = (float)buf[i] - (float)median;
-        sum_sq += diff * diff;
+        if (buf[i] >= lower && buf[i] <= upper) {
+            float diff = (float)buf[i] - (float)median;
+            sum_sq += diff * diff;
+            count++;
+        }
     }
     
     float rms = 0;
-    if (sum_sq > 0) {
-        float x = sum_sq / (float)SAMPLE_SIZE;
+    if (sum_sq > 0 && count > 0) {
+        float x = sum_sq / (float)count;
         rms = x;
         for (int j = 0; j < 10; j++)
             rms = 0.5f * (rms + x / rms);
@@ -63,8 +72,8 @@ float dsp_calcFreq(const uint16_t *buf) {
     if ((vmax - vmin) < 50) return 0.0f;
 
     uint16_t mid = (vmax + vmin) / 2;
-    uint16_t hyst = (vmax - vmin) / 8;
-    if (hyst < 5) hyst = 5;
+    uint16_t hyst = (vmax - vmin) / 5;  /* Increased from /8 to /5 for better noise immunity */
+    if (hyst < 15) hyst = 15;  /* Increased minimum hysteresis from 5 to 15 */
 
     int crossings = 0;
     int first_cross = -1;
@@ -106,8 +115,8 @@ float dsp_calcDuty(const uint16_t *buf) {
     if ((vmax - vmin) < 50) return 0.0f;
 
     uint16_t mid = (vmax + vmin) / 2;
-    uint16_t hyst = (vmax - vmin) / 8;
-    if (hyst < 5) hyst = 5;
+    uint16_t hyst = (vmax - vmin) / 5;  /* Increased from /8 to /5 for better noise immunity */
+    if (hyst < 15) hyst = 15;  /* Increased minimum hysteresis from 5 to 15 */
 
     int crossings = 0;
     int first_cross = -1;
@@ -147,18 +156,20 @@ uint16_t dsp_findTrig(const uint16_t *buf) {
         if (buf[i] < vmin) vmin = buf[i];
     }
     
-    /* Schmitt trigger hysteresis - SAME as dsp_calcFreq for consistency */
+    /* Schmitt trigger hysteresis - Increased for noise immunity */
     uint16_t mid = (vmax + vmin) / 2;
-    uint16_t hyst = (vmax - vmin) / 8;
-    if (hyst < 5) hyst = 5;  /* Minimum hysteresis 5 counts */
+    uint16_t hyst = (vmax - vmin) / 5;  /* Increased from /8 to /5 */
+    if (hyst < 15) hyst = 15;  /* Increased minimum hysteresis from 5 to 15 */
     
-    /* Find rising edge with Schmitt trigger (anti-noise) */
+    /* Find rising edge with Schmitt trigger (anti-noise) + edge confirmation */
     int state = (buf[0] > mid) ? 1 : 0;  /* 0=low, 1=high */
     
-    for (int i = 1; i < SAMPLE_SIZE; i++) {
+    for (int i = 1; i < SAMPLE_SIZE - 2; i++) {
         if (state == 0 && buf[i] > (mid + hyst)) {
-            /* Rising edge detected (low→high with hysteresis) */
-            return (uint16_t)i;
+            /* Rising edge detected - confirm by checking next 2 samples stay high */
+            if (buf[i + 1] > (mid + hyst) && buf[i + 2] > (mid + hyst)) {
+                return (uint16_t)i;  /* Confirmed rising edge */
+            }
         } else if (state == 1 && buf[i] < (mid - hyst)) {
             /* Falling edge - update state only */
             state = 0;
