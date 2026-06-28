@@ -135,19 +135,32 @@ float dsp_calcDuty(const uint16_t *buf) {
 }
 
 uint16_t dsp_findTrig(const uint16_t *buf) {
+    /* Find min/max voltage */
     uint16_t vmax = 0, vmin = 4095;
     for (int i = 0; i < SAMPLE_SIZE; i++) {
         if (buf[i] > vmax) vmax = buf[i];
         if (buf[i] < vmin) vmin = buf[i];
     }
+    
+    /* Schmitt trigger hysteresis - SAME as dsp_calcFreq for consistency */
     uint16_t mid = (vmax + vmin) / 2;
-
-    for (int i = 1; i < (SAMPLE_SIZE / 2); i++) {
-        if (buf[i - 1] < mid && buf[i] >= mid) {
+    uint16_t hyst = (vmax - vmin) / 8;
+    if (hyst < 5) hyst = 5;  /* Minimum hysteresis 5 counts */
+    
+    /* Find rising edge with Schmitt trigger (anti-noise) */
+    int state = (buf[0] > mid) ? 1 : 0;  /* 0=low, 1=high */
+    
+    for (int i = 1; i < SAMPLE_SIZE; i++) {
+        if (state == 0 && buf[i] > (mid + hyst)) {
+            /* Rising edge detected (low→high with hysteresis) */
             return (uint16_t)i;
+        } else if (state == 1 && buf[i] < (mid - hyst)) {
+            /* Falling edge - update state only */
+            state = 0;
         }
     }
-    return 0;
+    
+    return 0;  /* No rising edge found */
 }
 
 /* ---- Task DSP ---- */
