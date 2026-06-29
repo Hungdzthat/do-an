@@ -17,6 +17,20 @@ static void sort_array(uint16_t *arr, int size) {
             }
 }
 
+/* Moving average filter - smooth noise */
+static void moving_average_filter(uint16_t *buf, int window) {
+    if (window < 2) return;
+    uint16_t temp[SAMPLE_SIZE];
+    for (int i = 0; i < SAMPLE_SIZE; i++) temp[i] = buf[i];
+    
+    for (int i = window / 2; i < SAMPLE_SIZE - window / 2; i++) {
+        uint32_t sum = 0;
+        for (int j = -window / 2; j <= window / 2; j++)
+            sum += temp[i + j];
+        buf[i] = (uint16_t)(sum / window);
+    }
+}
+
 float dsp_calcVpp(const uint16_t *buf) {
     uint16_t sorted[SAMPLE_SIZE];
     for (int i = 0; i < SAMPLE_SIZE; i++) sorted[i] = buf[i];
@@ -200,18 +214,21 @@ void StartTaskDSP(void const *argument)
             osMutexRelease(gConfigMutexHandle);
 
             if (!hold) {
-                /* Use timeout to prevent deadlock if display is busy */
                 pOut = (DispData_t*)osMailAlloc(myQueue02Handle, 10);
 
                 if(pOut != NULL)
                 {
                     memcpy(pOut->wave, pIn->data, SAMPLE_SIZE * sizeof(uint16_t));
-                    pOut->vpp     = dsp_calcVpp(pIn->data);
-                    pOut->vrms    = dsp_calcVrms(pIn->data);
-                    pOut->vdc     = dsp_calcVdc(pIn->data);
-                    pOut->freq    = dsp_calcFreq(pIn->data);
-                    pOut->duty    = dsp_calcDuty(pIn->data);
-                    pOut->trigIdx = dsp_findTrig(pIn->data);
+                    
+                    /* Apply moving average filter (window=3) for smooth waveform */
+                    moving_average_filter(pOut->wave, 3);
+                    
+                    pOut->vpp     = dsp_calcVpp(pOut->wave);
+                    pOut->vrms    = dsp_calcVrms(pOut->wave);
+                    pOut->vdc     = dsp_calcVdc(pOut->wave);
+                    pOut->freq    = dsp_calcFreq(pOut->wave);
+                    pOut->duty    = dsp_calcDuty(pOut->wave);
+                    pOut->trigIdx = dsp_findTrig(pOut->wave);
 
                     osMailPut(myQueue02Handle, pOut);
                 }
