@@ -220,15 +220,18 @@ void StartTaskDSP(void const *argument)
                 {
                     memcpy(pOut->wave, pIn->data, SAMPLE_SIZE * sizeof(uint16_t));
                     
-                    /* Apply moving average filter (window=3) for smooth waveform */
-                    moving_average_filter(pOut->wave, 3);
-                    
                     pOut->vpp     = dsp_calcVpp(pOut->wave);
                     pOut->vrms    = dsp_calcVrms(pOut->wave);
                     pOut->vdc     = dsp_calcVdc(pOut->wave);
                     pOut->freq    = dsp_calcFreq(pOut->wave);
                     pOut->duty    = dsp_calcDuty(pOut->wave);
                     pOut->trigIdx = dsp_findTrig(pOut->wave);
+                    
+                    /* Apply moving average ONLY for smooth signals (duty 30-70%)
+                     * Skip for square waves (duty <20% or >80%) to preserve edges */
+                    if (pOut->duty > 30 && pOut->duty < 70) {
+                        moving_average_filter(pOut->wave, 3);
+                    }
 
                     osMailPut(myQueue02Handle, pOut);
                 }
