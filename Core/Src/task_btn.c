@@ -12,8 +12,20 @@ OscConfig_t gConfig = {
 };
 
 static void update_tim3_arr(uint32_t timeDivUs) {
+    uint32_t div = 7 * timeDivUs;
+    uint32_t psc = 0;
+    uint32_t arr = div - 1;
+
+    /* TIM3 is a 16-bit timer. If the total division (7 * timeDivUs) exceeds 65,536,
+     * we must configure the Prescaler (PSC) dynamically to prevent Autoreload (ARR) overflow. */
+    if (div > 65536) {
+        psc = div / 65536;
+        arr = div / (psc + 1) - 1;
+    }
+
     HAL_TIM_Base_Stop(&htim3);
-    __HAL_TIM_SET_AUTORELOAD(&htim3, (7 * timeDivUs) - 1);
+    __HAL_TIM_SET_PRESCALER(&htim3, psc);
+    __HAL_TIM_SET_AUTORELOAD(&htim3, arr);
     htim3.Instance->CNT = 0;
     HAL_TIM_Base_Start(&htim3);
 }
@@ -58,7 +70,7 @@ SelMode_t Btn_GetNextSelMode(SelMode_t mode) {
 
 void Btn_ApplyPlus(OscConfig_t *cfg) {
     if (cfg->selMode == SEL_VDIV) {
-        if (cfg->vdivMv < 50000) cfg->vdivMv += 50;
+        if (cfg->vdivMv < 50000) cfg->vdivMv += 200;
     } else {
         if (cfg->timeDivUs < 100000) cfg->timeDivUs += 50;
         update_tim3_arr(cfg->timeDivUs);
@@ -67,7 +79,7 @@ void Btn_ApplyPlus(OscConfig_t *cfg) {
 
 void Btn_ApplyMinus(OscConfig_t *cfg) {
     if (cfg->selMode == SEL_VDIV) {
-        if (cfg->vdivMv > 50) cfg->vdivMv -= 50;
+        if (cfg->vdivMv > 50) cfg->vdivMv -= 200;
     } else {
         if (cfg->timeDivUs > 50) cfg->timeDivUs -= 50;
         update_tim3_arr(cfg->timeDivUs);

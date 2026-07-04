@@ -6,7 +6,7 @@
 
 /* ---- DSP helper functions ---- */
 
-/* Simple bubble sort helper - extract to avoid duplication */
+/* Hàm sắp xếp nổi bọt hỗ trợ tính toán thông số */
 static void sort_array(uint16_t *arr, int size) {
     for (int i = 0; i < size - 1; i++)
         for (int j = 0; j < size - i - 1; j++)
@@ -17,17 +17,22 @@ static void sort_array(uint16_t *arr, int size) {
             }
 }
 
-/* Moving average filter - smooth noise */
-static void moving_average_filter(uint16_t *buf, int window) {
-    if (window < 2) return;
+/* Bộ lọc nhiễu dạng tam giác giúp làm mịn các sóng sine/triangle */
+static void smooth_filter(uint16_t *buf, int window) {
+    if (window < 3) return;
+    int halfW = window / 2;
     uint16_t temp[SAMPLE_SIZE];
     for (int i = 0; i < SAMPLE_SIZE; i++) temp[i] = buf[i];
-    
-    for (int i = window / 2; i < SAMPLE_SIZE - window / 2; i++) {
-        uint32_t sum = 0;
-        for (int j = -window / 2; j <= window / 2; j++)
-            sum += temp[i + j];
-        buf[i] = (uint16_t)(sum / window);
+
+    for (int i = halfW; i < SAMPLE_SIZE - halfW; i++) {
+        uint32_t wsum = 0;
+        uint32_t wdiv = 0;
+        for (int j = -halfW; j <= halfW; j++) {
+            uint32_t w = (uint32_t)(halfW + 1 - (j < 0 ? -j : j));  /* triangular weight */
+            wsum += w * temp[i + j];
+            wdiv += w;
+        }
+        buf[i] = (uint16_t)(wsum / wdiv);
     }
 }
 
@@ -220,17 +225,66 @@ void StartTaskDSP(void const *argument)
                 {
                     memcpy(pOut->wave, pIn->data, SAMPLE_SIZE * sizeof(uint16_t));
                     
-                    pOut->vpp     = dsp_calcVpp(pOut->wave);
-                    pOut->vrms    = dsp_calcVrms(pOut->wave);
-                    pOut->vdc     = dsp_calcVdc(pOut->wave);
-                    pOut->freq    = dsp_calcFreq(pOut->wave);
-                    pOut->duty    = dsp_calcDuty(pOut->wave);
+                    float raw_vpp  = dsp_calcVpp(pOut->wave);
+                    float raw_vrms = dsp_calcVrms(pOut->wave);
+                    float raw_vdc  = dsp_calcVdc(pOut->wave);
+                    float raw_freq = dsp_calcFreq(pOut->wave);
+                    float raw_duty = dsp_calcDuty(pOut->wave);
+
+                    /* Bộ lọc đệ quy IIR bậc 1 giúp ổn định các số đo hiển thị */
+                    static float f_vpp = -1.0f;
+                    static float f_vrms = -1.0f;
+                    static float f_vdc = 999.0f;
+                    static float f_freq = -1.0f;
+                    static float f_duty = -1.0f;
+
+                    if (f_vpp < 0.0f) {
+                        f_vpp  = raw_vpp;
+                        f_vrms = raw_vrms;
+                        f_vdc  = raw_vdc;
+                        f_freq = raw_freq;
+                        f_duty = raw_duty;
+                    } else {
+                        const float alpha = 0.15f; /* 15% mới, 85% cũ */
+                        f_vpp  = alpha * raw_vpp  + (1.0f - alpha) * f_vpp;
+                        f_vrms = alpha * raw_vrms + (1.0f - alpha) * f_vrms;
+                        f_vdc  = alpha * raw_vdc  + (1.0f - alpha) * f_vdc;
+                        f_duty = alpha * raw_duty + (1.0f - alpha) * f_duty;
+
+                        /* Nhảy nhanh tần số khi cắm/rút que đo */
+                        if ((raw_freq == 0.0f && f_freq < 10.0f) || (raw_freq > 0.0f && f_freq == 0.0f)) {
+                            f_freq = raw_freq;
+                        } else {
+                            f_freq = alpha * raw_freq + (1.0f - alpha) * f_freq;
+                        }
+                    }
+
+                    pOut->vpp     = f_vpp;
+                    pOut->vrms    = f_vrms;
+                    pOut->vdc     = f_vdc;
+                    pOut->freq    = f_freq;
+                    pOut->duty    = f_duty;
                     pOut->trigIdx = dsp_findTrig(pOut->wave);
                     
-                    /* Apply moving average ONLY for smooth signals (duty 30-70%)
-                     * Skip for square waves (duty <20% or >80%) to preserve edges */
-                    if (pOut->duty > 30 && pOut->duty < 70) {
-                        moving_average_filter(pOut->wave, 3);
+                    /* Nhận diện sóng vuông để bỏ qua bộ lọc làm mịn, bảo toàn cạnh đứng sắc nét */
+                    {
+                        uint16_t vmax = 0, vmin = 4095;
+                        uint16_t max_diff = 0;
+                        for (int i = 0; i < SAMPLE_SIZE; i++) {
+                            uint16_t val = pOut->wave[i];
+                            if (val > vmax) vmax = val;
+                            if (val < vmin) vmin = val;
+                            if (i < SAMPLE_SIZE - 1) {
+                                uint16_t next_val = pOut->wave[i + 1];
+                                uint16_t diff = (next_val > val) ? (next_val - val) : (val - next_val);
+                                if (diff > max_diff) max_diff = diff;
+                            }
+                        }
+                        uint16_t amplitude = vmax - vmin;
+                        /* Lọc làm mịn khi biên độ đủ lớn và biến thiên mượt (sine/triangle) */
+                        if (amplitude > 50 && max_diff < (amplitude * 4 / 10)) {
+                            smooth_filter(pOut->wave, 5);
+                        }
                     }
 
                     osMailPut(myQueue02Handle, pOut);

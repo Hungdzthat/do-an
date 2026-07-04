@@ -11,12 +11,16 @@ void BuildWaveform(DispData_t *pDisp) {
   unsigned int vol_div_mv = (unsigned int)(gConfig.vdivMv);
   osMutexRelease(gConfigMutexHandle);
 
+  /* Hệ số tỉ lệ trục Y */
   const float scale = ((float)vol_div_mv * 4.0f) / 1000.0f;
-  /* Start from trigger point for stable waveform display */
-  int trig = (int)pDisp->trigIdx;
+  const int trig = (int)pDisp->trigIdx;
 
+  /* Ánh xạ 1-1 từ mẫu ADC sang pixel hiển thị (do tần số lấy mẫu thay đổi động theo timebase) */
   for (int x = 0; x < 160; x++) {
-    float adc = (float)pDisp->wave[(trig + x) % SAMPLE_SIZE];
+    int idx = (trig + x) % SAMPLE_SIZE;
+    float adc = (float)pDisp->wave[idx];
+
+    /* Tính tọa độ Y (Căn giữa tại y=64) */
     int y = 64 - (int)((adc - 2022.0f) / scale);
     if (y < 0) y = 0;
     if (y > 117) y = 117;

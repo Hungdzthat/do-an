@@ -18,7 +18,7 @@ void Analog_Signal_Init(void) {
 }
 
 /* Simple 3-point median filter for noise reduction */
-static uint16_t median_filter(uint16_t a, uint16_t b, uint16_t c) {
+static uint16_t median3(uint16_t a, uint16_t b, uint16_t c) {
   if (a > b) {
     if (b > c) return b;  /* a > b > c */
     if (a > c) return c;  /* a > c >= b */
@@ -31,19 +31,23 @@ static uint16_t median_filter(uint16_t a, uint16_t b, uint16_t c) {
 }
 
 static void unpack_adc_data(uint32_t offset) {
+  /* Step 1: Unpack all raw dual-ADC data into FINAL array first */
   for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
     uint32_t raw = ADC_VAL[offset + i];
-    uint16_t s0 = (uint16_t)(raw & 0xFFFFu);
-    uint16_t s1 = (uint16_t)((raw >> 16) & 0xFFFFu);
-    
-    /* Apply 3-point median filter for noise reduction (when previous sample exists) */
-    if (2 * i > 0) {
-      uint16_t prev = ADC_VAL_FINAL[2 * i - 1];
-      ADC_VAL_FINAL[2 * i] = median_filter(prev, s0, s1);
-    } else {
-      ADC_VAL_FINAL[2 * i] = s0;
-    }
-    ADC_VAL_FINAL[2 * i + 1] = s1;
+    ADC_VAL_FINAL[2 * i]     = (uint16_t)(raw & 0xFFFFu);
+    ADC_VAL_FINAL[2 * i + 1] = (uint16_t)((raw >> 16) & 0xFFFFu);
+  }
+
+  /* Step 2: Apply 3-point median filter on the complete raw buffer.
+   * Use a small sliding window to avoid needing a full temp copy:
+   * keep previous two raw values to compute median without feedback. */
+  uint16_t prev2 = ADC_VAL_FINAL[0];
+  for (int i = 1; i < SAMPLE_SIZE - 1; i++) {
+    uint16_t cur  = ADC_VAL_FINAL[i];
+    uint16_t next = ADC_VAL_FINAL[i + 1];
+    uint16_t med  = median3(prev2, cur, next);
+    prev2 = cur;       /* save raw value before overwriting */
+    ADC_VAL_FINAL[i] = med;
   }
 }
 
