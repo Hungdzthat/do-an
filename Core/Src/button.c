@@ -1,4 +1,5 @@
 #include "button.h"
+#include "st7735_dma.h"   /* AFE_GAIN, ADC_VREF_MV, ADC_FS_HZ */
 
 /* ---- Runtime scale values ---- */
 uint16_t vol_div_mv  = 1000;   /* mV / div — default 1 V/div      */
@@ -118,13 +119,17 @@ void ComputeSignalParams(uint16_t *adc, int len) {
 
   float mean = sum / (float)len;   /* DC level in ADC counts */
 
-  /* Vpp in mV */
-  sigParams.vpp_mv = (uint16_t)(((uint32_t)(vmax - vmin) * 3300u) / 4096u);
+  /* Vpp in mV — real voltage at probe tip
+   *   ADC Vpp  = (vmax-vmin) × VREF / 4096
+   *   Real Vpp = ADC Vpp × AFE_GAIN  (reverse the 1/20 front-end attenuation)
+   *   max: 4095 × 3300 × 20 = 270 270 000  →  fits uint32_t              */
+  sigParams.vpp_mv = ((uint32_t)(vmax - vmin) * (uint32_t)ADC_VREF_MV
+                      * (uint32_t)AFE_GAIN) / 4096u;
 
   /* ================================================================
    * 2. Vrms — AC RMS (subtract DC mean before squaring)
    *    Vrms_adc = sqrt( sum((v - mean)²) / N )
-   *    Vrms_mV  = Vrms_adc × 3300 / 4096
+   *    Vrms_mV  = Vrms_adc × VREF / 4096 × AFE_GAIN
    * ================================================================ */
   {
     float ac_sum_sq = 0.0f;
@@ -140,7 +145,8 @@ void ComputeSignalParams(uint16_t *adc, int len) {
       for (int i = 0; i < 15; i++)
         rms_adc = 0.5f * (rms_adc + mean_sq / rms_adc);
     }
-    sigParams.vrms_mv = (uint16_t)(rms_adc * 3300.0f / 4096.0f);
+    sigParams.vrms_mv = (uint32_t)(rms_adc * (float)ADC_VREF_MV
+                                   * (float)AFE_GAIN / 4096.0f);
   }
 
   /* ================================================================
@@ -176,8 +182,10 @@ void ComputeSignalParams(uint16_t *adc, int len) {
       /* Period in ADC1-samples = span / (crossings − 1) */
       float period_samples = (float)(last_cross - first_cross)
                              / (float)(crossings - 1);
-      /* Freq = f_TIM3 / period_samples  (37 333 Hz uniform rate) */
-      sigParams.freq_hz = (uint32_t)(37333.0f / period_samples + 0.5f);
+      /* Freq = f_TIM3 / period_samples
+       * f_TIM3 = ADC_FS_HZ / 2 (only ADC1 samples used, uniform rate) */
+      sigParams.freq_hz = (uint32_t)((float)(ADC_FS_HZ) / 2.0f
+                                     / period_samples + 0.5f);
 
       /* Duty: count ADC1 samples above mid within first full period */
       int span        = last_cross - first_cross;

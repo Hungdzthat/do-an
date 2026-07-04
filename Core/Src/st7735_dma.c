@@ -341,8 +341,15 @@ void ST7735_RenderFrame(uint8_t waveY[]) {
 
   char infoLines[4][16];
   if (show_info) {
-    snprintf(infoLines[0], 16, "Vpp:%umV", (unsigned)sigParams.vpp_mv);
-    snprintf(infoLines[1], 16, "Vrms:%umV", (unsigned)sigParams.vrms_mv);
+    /* Display real voltage in V with 2 decimal places (e.g. "Vp:3.30V")
+     * to fit the 80 px (10-char) info overlay.  Values are now in mV of
+     * real probe-tip voltage (scaled by AFE_GAIN).                       */
+    snprintf(infoLines[0], 16, "Vp:%u.%02uV",
+             (unsigned)(sigParams.vpp_mv / 1000),
+             (unsigned)((sigParams.vpp_mv % 1000) / 10));
+    snprintf(infoLines[1], 16, "Vr:%u.%02uV",
+             (unsigned)(sigParams.vrms_mv / 1000),
+             (unsigned)((sigParams.vrms_mv % 1000) / 10));
     snprintf(infoLines[2], 16, "Duty:%u%%", (unsigned)sigParams.duty);
     snprintf(infoLines[3], 16, "F:%uHz", (unsigned)sigParams.freq_hz);
   }

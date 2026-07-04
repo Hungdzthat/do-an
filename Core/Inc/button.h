@@ -14,10 +14,10 @@ extern uint8_t hold_active;   /* 0 = running,  1 = frozen       */
 
 /* ---- Measured signal parameters (computed by ComputeSignalParams) ---- */
 typedef struct {
-  uint16_t vpp_mv;    /* peak-to-peak voltage in mV  */
-  uint16_t vrms_mv;   /* RMS voltage in mV           */
-  uint8_t  duty;      /* duty cycle 0–100 %          */
-  uint32_t freq_hz;   /* frequency in Hz             */
+  uint32_t vpp_mv;    /* peak-to-peak real voltage in mV (×AFE_GAIN) */
+  uint32_t vrms_mv;   /* RMS real voltage in mV (×AFE_GAIN)          */
+  uint8_t  duty;      /* duty cycle 0–100 %                          */
+  uint32_t freq_hz;   /* frequency in Hz                             */
 } SignalParams_t;
 
 extern SignalParams_t sigParams;

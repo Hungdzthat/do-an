@@ -29,4 +29,7 @@ spi/button.o: ..\Core\Src\button.c ..\Core\Inc\button.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_pwr.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_spi.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_tim.h \
-  ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_tim_ex.h
+  ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_tim_ex.h \
+  ..\Core\Inc\st7735_dma.h E:\ARM\ARMCLANG\Bin\..\include\stdio.h \
+  E:\ARM\ARMCLANG\Bin\..\include\stdlib.h \
+  E:\ARM\ARMCLANG\Bin\..\include\string.h

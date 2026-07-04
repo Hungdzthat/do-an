@@ -31,14 +31,21 @@ extern uint8_t waveY[160];
 #define ADC_VREF_MV 3300u /* ADC reference voltage, millivolts      */
 #define ADC_FS_HZ 74667u  /* ADC effective sample rate, Hz          */
 
+/* Analog Front-End inverse gain factor
+ *   Hardware: 1/40 divider (R1=390k, R2=10k) × 2x amp (R7=1.5k, R5=1k)
+ *   Net attenuation = 1/20  →  V_ADC = V_real / 20 + 1.65 V
+ *   To recover real voltage from ADC:  V_real = (V_ADC − 1.65) × AFE_GAIN  */
+#define AFE_GAIN  20u
+
 /* Derived waveform scaling — now uses runtime variables
  *
- *   Y_SCALE_F(v) = ADC counts per pixel
- *                = v × 4096 / (16 px/div × ADC_VREF_MV)
+ *   Y_SCALE_F(v) = ADC counts per pixel  (v = real mV/div at probe tip)
+ *     = v / AFE_GAIN × 4096 / (16 px/div × ADC_VREF_MV)
+ *     = v × 4096 / (16 × ADC_VREF_MV × AFE_GAIN)
  *   X_STEP_F(t)  = ADC samples per pixel
  *                = t × ADC_FS_HZ / (16 px/div × 1 000 000 µs/s)              */
 #define Y_SCALE_F_RT(v)                                                        \
-  ((float)(v) * 4096.0f / (16.0f * (float)(ADC_VREF_MV)))
+  ((float)(v) * 4096.0f / (16.0f * (float)(ADC_VREF_MV) * (float)(AFE_GAIN)))
 #define X_STEP_F_RT(t)                                                         \
   ((float)(t) * (float)(ADC_FS_HZ) / (16.0f * 1000000.0f))
 
