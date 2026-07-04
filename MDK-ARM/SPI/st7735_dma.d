@@ -32,4 +32,5 @@ spi/st7735_dma.o: ..\Core\Src\st7735_dma.c ..\Core\Inc\st7735_dma.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_tim_ex.h \
   E:\ARM\ARMCLANG\Bin\..\include\stdio.h \
   E:\ARM\ARMCLANG\Bin\..\include\stdlib.h \
-  E:\ARM\ARMCLANG\Bin\..\include\string.h ..\Core\Inc\fonts.h
+  E:\ARM\ARMCLANG\Bin\..\include\string.h ..\Core\Inc\button.h \
+  ..\Core\Inc\fonts.h

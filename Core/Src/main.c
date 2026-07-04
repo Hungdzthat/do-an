@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "Analog_signal.h"
+#include "button.h"
 #include "st7735_dma.h"
 #include <math.h>
 #include <string.h>
@@ -76,7 +77,7 @@ static void MX_TIM3_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-extern uint16_t ADC_VAL_FINAL[];
+extern uint16_t ADC_VAL_FINAL[640];
 
 int FindTrigger(void) {
   uint16_t vmax = 0;
@@ -110,8 +111,8 @@ void BuildWaveform(void) {
    *   X_STEP_F = ADC samples per pixel  (e.g. 2.0 @ 429 us/div)
    *   Y_SCALE_F = ADC counts per pixel   (e.g. 60  @ 773 mV/div)
    */
-  const float step  = X_STEP_F;
-  const float scale = Y_SCALE_F;
+  const float step = X_STEP_F_RT(time_div_us);
+  const float scale = Y_SCALE_F_RT(vol_div_mv);
 
   for (int x = 0; x < 160; x++) {
     float pos = trig + x * step;
@@ -180,8 +181,9 @@ int main(void) {
   MX_TIM2_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); // Ham tao pwm chan PA0
-  Analog_Signal_Init();                     // Ham do tin hieu ADC
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); /* TEST SIGNAL 500 Hz 50% on PA0 */
+  Button_Init();                              // GPIO init PA8–PA12 buttons
+  Analog_Signal_Init();                       // Ham do tin hieu ADC
 
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 1);
   ST7735_Init();
@@ -191,7 +193,20 @@ int main(void) {
   /* USER CODE BEGIN WHILE */
   while (1) {
     /* USER CODE END WHILE */
-    BuildWaveform();
+    ScanButtons();
+
+    /* ADC_MarkReading() atomically transitions READY→READING and returns 1.
+     * While READING, DMA callbacks skip writing → no race with BuildWaveform.
+     * ADC_MarkDone() releases the buffer back to EMPTY so the next DMA
+     * cycle can start filling it again.                                      */
+    if (!hold_active && ADC_MarkReading()) {
+      BuildWaveform();
+      if (show_info) {
+        ComputeSignalParams(ADC_VAL_FINAL, 640);
+      }
+      ADC_MarkDone();    /* READING → EMPTY: callbacks may write next cycle */
+    }
+
     ST7735_RenderFrame(waveY);
     /* USER CODE BEGIN 3 */
   }
@@ -389,7 +404,7 @@ static void MX_TIM2_Init(void) {
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 55;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 1000 - 1;
+  htim2.Init.Period = 2000 - 1;  /* ARR=1999: f = 56MHz/56/2000 = 500 Hz */
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK) {
@@ -532,11 +547,11 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t *file, uint32_t line) {
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line
-     number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,
-     line) */
-  /* USER CODE END 6 */
+void assert_failed(uint8_t *file, uint32_t line){
+    /* USER CODE BEGIN 6 */
+    /* User can add his own implementation to report the file name and line
+       number, ex: printf("Wrong parameters value: file %s on line %d\r\n",
+       file, line) */
+    /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
